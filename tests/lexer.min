@@ -1,0 +1,8 @@
+## comment should be ignored !@#$%^&*(1234567890
+
+function foo;
+## ignore this comment
+##
+	ident123 == 17 - 9999125;
+	## indented comment
+        IDENT_FOO;
