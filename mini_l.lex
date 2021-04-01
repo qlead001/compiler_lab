@@ -22,6 +22,15 @@ DIGIT	[0-9]
 		printf("IDENT %s\n", yytext); currPos += yyleng;
 		}
 
+	/* Numbers */
+{DIGIT}+	{printf("NUMBER %s\n", yytext); currPos += yyleng;}
+
+	/* Special Symbols */
+";"		{printf("SEMICOLON\n"); currPos += yyleng;}
+
+	/* Comments */
+"##"[^\n]*	/* ignore comments */
+
 	/* Invalid Identifiers */
 [0-9_][a-zA-Z0-9_]+	{
 		printf("Error at line %d, column %d: "
@@ -35,15 +44,6 @@ DIGIT	[0-9]
 			"underscore\n",currLine, currPos, yytext);
 		exit(1);
 		}
-
-	/* Numbers */
-{DIGIT}+	{printf("NUMBER %s\n", yytext); currPos += yyleng;}
-
-	/* Special Symbols */
-";"		{printf("SEMICOLON\n"); currPos += yyleng;}
-
-	/* Comments */
-"##"[^\n]*	/* ignore comments */
 
 	/* White Space */
 [ \t]+		{/* ignore */ currPos += yyleng;}
