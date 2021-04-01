@@ -18,7 +18,7 @@ DIGIT	[0-9]
 "=="		{printf("EQ\n"); currPos += yyleng;}
 
 	/* Identifiers */
-[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z0-9]	{
+[a-zA-Z]([a-zA-Z0-9_]*[a-zA-Z0-9])?	{
 		printf("IDENT %s\n", yytext); currPos += yyleng;
 		}
 
