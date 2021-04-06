@@ -14,7 +14,7 @@ LIB = -lfl
 TEST = git --no-pager diff --exit-code --no-index --
 
 # Get list of tests
-LEX_TESTS := $(addsuffix .lexer, $(basename $(wildcard tests/*.token)))
+LEX_TESTS := $(addsuffix .lexer, $(basename $(wildcard tests/*.tokens)))
 
 lexer: lex.yy.c
 	$(CC) -o lexer lex.yy.c $(LIB)
@@ -26,7 +26,7 @@ test: testlex
 
 testlex: $(LEX_TESTS)
 
-tests/%.lexer: tests/%.token tests/%.min lexer
+tests/%.lexer: tests/%.tokens tests/%.min lexer
 	@echo "$(COL_SMO)[Lexer]$(COL_RST) Running $* test..."; \
 	./lexer $(word 2, $?) | $(TEST) $< -; \
 	if [ "$$?" -eq "0" ]; \
