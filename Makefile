@@ -17,7 +17,7 @@ TEST = git --no-pager diff --exit-code --no-index --
 LEX_TESTS := $(addsuffix .lexer, $(basename $(wildcard tests/*.tokens)))
 
 lexer: lex.yy.c
-	$(CC) -o lexer lex.yy.c $(LIB)
+	$(CC) -o lexer lex.yy.c -D LEXER $(LIB)
 
 lex.yy.c: mini_l.lex
 	$(LEX) -o lex.yy.c mini_l.lex
