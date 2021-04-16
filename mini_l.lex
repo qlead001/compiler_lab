@@ -129,5 +129,7 @@ int main(int argc, char ** argv) {
 			printf(" %d\n", yylval.ival);
 		else printf("\n");
 	}
+
+	return 0;
 }
 #endif
