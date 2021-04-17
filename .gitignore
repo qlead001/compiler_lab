@@ -1,2 +1,8 @@
+# Lexer Generation Files
 lex.yy.c
 lexer
+
+# Parser Generation Files
+y.tab.*
+y.output
+parser

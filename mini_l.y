@@ -1,5 +1,6 @@
 /* bison parser for MINI-L programming language */
 %{
+#include <stdio.h>
 void yyerror(const char *msg);
 extern int currLine;
 extern int currPos;
@@ -12,7 +13,10 @@ FILE * yyin;
 }
 
 %error-verbose
-%start 	program
+%define parse.trace
+%printer { fprintf(yyo, "NUMBER %d", $$); } <ival>
+%printer { fprintf(yyo, "IDENT %s", $$); } <sval>
+%start 	prog_start
 %token	FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY
 	END_BODY INTEGER ARRAY ENUM OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP
 	ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN SUB ADD
@@ -42,7 +46,7 @@ functions:
 	;
 
 function:
-	  FUNCTION IDENT SEMICOLON BEGIN_PARAMS declarations END_PARAMS
+	  FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
 	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY
 	;
 
@@ -86,12 +90,18 @@ statement:
 
 bool_exp:
 	  relation_and_exp
+	| relation_and_exp OR bool_exp
+/*
 	| relation_and_exp OR relation_and_exp
+*/
 	;
 
 relation_and_exp:
 	  relation_exp
+	| relation_exp AND relation_and_exp
+/*
 	| relation_exp AND relation_exp
+*/
 	;
 
 relation_exp:
@@ -114,14 +124,57 @@ comp:
 	| GTE
 	;
 
+expressions:
+	  /* epsilon */
+	| expression COMMA expressions
+	;
+
 expression:
 	  multiplicative_expression
-	| multiplicative_expression ADD multiplicative_expression
+	| multiplicative_expression SUB expression
+	| multiplicative_expression ADD expression
+/*
 	| multiplicative_expression SUB multiplicative_expression
+	| multiplicative_expression ADD multiplicative_expression
+*/
+	;
+
+multiplicative_expression:
+	  term
+	| term MOD term
+	| term DIV term
+	| term MULT term
+	;
+
+term:
+	  SUB var %prec UMINUS
+	| SUB NUMBER %prec UMINUS
+	| SUB L_PAREN expression R_PAREN %prec UMINUS
+	| var
+	| NUMBER
+	| L_PAREN expression R_PAREN
+	| ident L_PAREN expression R_PAREN
+	| ident L_PAREN expressions R_PAREN
+/* Wrong?
+	| ident L_PAREN R_PAREN
+*/
+	;
+
+vars:
+	  var
+	| var COMMA vars
+	;
+
+var:
+	  ident
+	| ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET
 	;
 %%
 
 int main(int argc, char ** argv) {
+	#ifdef YYDEBUG
+		yydebug = 1;
+	#endif
 	if(argc >= 2) {
 		yyin = fopen(argv[1], "r");
 		if(yyin == NULL) {
@@ -130,12 +183,11 @@ int main(int argc, char ** argv) {
 	}else{
 		yyin = stdin;
 	}
-	yyparse();
 
-	return 0;
+	return yyparse();
 }
 
 void yyerror(const char *msg) {
-	printf("Syntax error at line %d, column %d: %s\n",
+	fprintf(stderr, "Syntax error at line %d, column %d: %s\n",
 		currLine, currPos, msg);
 }
