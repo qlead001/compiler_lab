@@ -1,4 +1,4 @@
-.PHONY: all clean test testlex tests/%.lexer
+.PHONY: all debug clean test testlex tests/%.lexer
 
 # Variables for fancy output
 COL_RST := $(shell tput sgr0)
@@ -10,15 +10,22 @@ COL_YEL := $(shell tput setaf 3)
 # Tools
 CC = gcc
 LEX = flex
+LEX_FLAGS := $() # empty
 LIB = -lfl
 PARSE = bison
 PARSE_FLAGS = -v -d --file-prefix=y
 TEST = git --no-pager diff --exit-code --no-index --
 
+# Debug flags
+debug: PARSE_FLAGS += -t
+debug: LEX_FLAGS += -d
+
 # Get list of tests
 LEX_TESTS := $(addsuffix .lexer, $(basename $(wildcard tests/*.tokens)))
 
 all: parser lexer
+
+debug: all
 
 parser: y.tab.c lex.yy.c
 	$(CC) -o $@ $^ $(LIB)
@@ -30,7 +37,7 @@ lexer: lex.yy.c
 	$(CC) -o $@ $^ -D LEXER $(LIB)
 
 lex.yy.c: mini_l.lex
-	$(LEX) -o $@ $^
+	$(LEX) $(LEX_FLAGS) -o $@ $^
 
 test: testlex
 
