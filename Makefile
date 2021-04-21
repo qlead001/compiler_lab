@@ -10,7 +10,7 @@ COL_YEL := $(shell tput setaf 3)
 # Tools
 CC = gcc
 LEX = flex
-LEX_FLAGS := $() # empty
+LEX_FLAGS = # empty
 LIB = -lfl
 PARSE = bison
 PARSE_FLAGS = -v -d --file-prefix=y
