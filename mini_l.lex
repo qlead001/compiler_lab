@@ -5,6 +5,19 @@
 	#include "lexer.h"
 #else
 	#include "y.tab.h"
+	#define YY_USER_ACTION \
+		yylloc.first_line = yylloc.last_line; \
+		yylloc.first_column = yylloc.last_column; \
+		{int i; \
+		for(i = 0; yytext[i] != '\0'; i++) { \
+			if(yytext[i] == '\n') { \
+				yylloc.last_line++; \
+				yylloc.last_column = 0; \
+			} \
+			else { \
+				yylloc.last_column++; \
+			} \
+		}}
 #endif
 
 int currLine = 1, currPos = 0;

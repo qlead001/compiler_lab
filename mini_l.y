@@ -1,6 +1,7 @@
 /* bison parser for MINI-L programming language */
 %{
 #include <stdio.h>
+#include <string.h>
 void yyerror(const char *msg);
 extern int currLine;
 extern int currPos;
@@ -12,8 +13,8 @@ FILE * yyin;
  	int ival;
 }
 
-%error-verbose
-%define parse.trace
+%define parse.error verbose
+%locations
 %printer { fprintf(yyo, "NUMBER %d", $$); } <ival>
 %printer { fprintf(yyo, "IDENT %s", $$); } <sval>
 %start 	prog_start
@@ -172,12 +173,12 @@ var:
 %%
 
 int main(int argc, char ** argv) {
-	#ifdef YYDEBUG
+	#if YYDEBUG
 		yydebug = 1;
 	#endif
-	if(argc >= 2) {
+	if (argc >= 2) {
 		yyin = fopen(argv[1], "r");
-		if(yyin == NULL) {
+		if (yyin == NULL) {
 			yyin = stdin;
 		}
 	}else{
@@ -188,6 +189,30 @@ int main(int argc, char ** argv) {
 }
 
 void yyerror(const char *msg) {
+	if (strlen(msg) > 15) {
+		char dest[15];
+		strncpy(dest, msg, 14);
+		dest[14] = '\0';
+		if (!strcmp(dest, "syntax error, ")) {
+			fprintf(stderr, "Syntax error ");
+			msg += 14;
+		} else
+			fprintf(stderr, "Error ");
+	} else
+		fprintf(stderr, "Error ");
+
+	if (yylloc.first_line != yylloc.last_line)
+		fprintf(stderr, "on lines %d-%d: %s\n", yylloc.first_line,
+			yylloc.last_line, msg);
+	else if (yylloc.first_column != yylloc.last_column)
+		fprintf(stderr, "at line %d, columns %d-%d: %s\n",
+			yylloc.first_line, yylloc.first_column,
+			yylloc.last_column, msg);
+	else
+		fprintf(stderr, "at line %d, column %d: %s\n",
+			yylloc.first_line, yylloc.first_column, msg);
+/*
 	fprintf(stderr, "Syntax error at line %d, column %d: %s\n",
 		currLine, currPos, msg);
+*/
 }
