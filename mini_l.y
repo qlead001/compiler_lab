@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 void yyerror(const char *msg);
+void printErr(const char *msg);
 extern int currLine;
 extern int currPos;
 FILE * yyin;
@@ -14,20 +15,26 @@ FILE * yyin;
 }
 
 %define parse.error verbose
+%define parse.lac full
 %locations
 %printer { fprintf(yyo, "NUMBER %d", $$); } <ival>
 %printer { fprintf(yyo, "IDENT %s", $$); } <sval>
 %start 	prog_start
-%token	FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY
-	END_BODY INTEGER ARRAY ENUM OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP
-	ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN SUB ADD
-	MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN
-	R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN
-%token	<sval>	IDENT
-%token	<ival>	NUMBER
+%token	FUNCTION "function" BEGIN_PARAMS "beginparams" END_PARAMS "endparams"
+	BEGIN_LOCALS "beginlocals" END_LOCALS "endlocals" BEGIN_BODY "beginbody"
+	END_BODY "endbody" INTEGER "integer" ARRAY "array" ENUM "enum" OF "of"
+	IF "if" THEN "then" ENDIF "endif" ELSE "else" WHILE "while" DO "do"
+	BEGINLOOP "beginloop" ENDLOOP "endloop" CONTINUE "continue" READ "read"
+	WRITE "write" AND "and" OR "or" NOT "not" TRUE "true" FALSE "false"
+	RETURN "return" SUB "-" ADD "+" MULT "*" DIV "/" MOD "%" EQ "==" NEQ "<>"
+	LT "<" GT ">" LTE "<=" GTE ">=" SEMICOLON ";" COLON ":" COMMA ","
+	L_PAREN "(" R_PAREN ")" L_SQUARE_BRACKET "[" R_SQUARE_BRACKET "]"
+	ASSIGN ":="
+%token	<sval>	IDENT "identifier"
+%token	<ival>	NUMBER "number"
 %left	L_PAREN R_PAREN
 %left	L_SQUARE_BRACKET R_SQUARE_BRACKET
-%right	UMINUS
+%right	UMINUS " -"
 %left	MULT DIV MOD
 %left	ADD SUB
 %left	LT LTE GT GTE EQ NEQ
@@ -49,11 +56,20 @@ functions:
 function:
 	  FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
 	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY
+	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
+	  BEGIN_LOCALS declarations END_LOCALS error END_BODY {
+		printErr("invalid function, missing body");
+		yyclearin; yyerrok;
+		}
 	;
 
 declarations:
 	  /* epsilon */
 	| declaration SEMICOLON declarations
+	| error SEMICOLON {
+		printErr("invalid declaration");
+		yyclearin; yyerrok;
+		}
 	;
 
 declaration:
@@ -202,17 +218,23 @@ void yyerror(const char *msg) {
 		fprintf(stderr, "Error ");
 
 	if (yylloc.first_line != yylloc.last_line)
-		fprintf(stderr, "on lines %d-%d: %s\n", yylloc.first_line,
+		fprintf(stderr, "on lines %d-%d:\t%s\n", yylloc.first_line,
 			yylloc.last_line, msg);
 	else if (yylloc.first_column != yylloc.last_column)
-		fprintf(stderr, "at line %d, columns %d-%d: %s\n",
+		fprintf(stderr, "at line %d, columns %d-%d:\t%s\n",
 			yylloc.first_line, yylloc.first_column,
 			yylloc.last_column, msg);
 	else
-		fprintf(stderr, "at line %d, column %d: %s\n",
+		fprintf(stderr, "at line %d, column %d:\t%s\n",
 			yylloc.first_line, yylloc.first_column, msg);
-/*
-	fprintf(stderr, "Syntax error at line %d, column %d: %s\n",
-		currLine, currPos, msg);
-*/
+}
+
+#define	NSPACES	37
+void printErr(const char *msg) {
+	char spaces[NSPACES+1];
+	int i;
+	for (i = 0; i < NSPACES; i++)
+		spaces[i] = ' ';
+	spaces[NSPACES] = '\0';
+	fprintf(stderr, "%s\t%s\n", spaces, msg);
 }
