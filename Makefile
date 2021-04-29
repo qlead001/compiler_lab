@@ -1,4 +1,4 @@
-.PHONY: all debug clean test testlex tests/%.lexer
+.PHONY: all debug clean test testlex tests/%.lexer doc grammardoc
 
 # Variables for fancy output
 COL_RST := $(shell tput sgr0)
@@ -15,6 +15,9 @@ LIB = -lfl
 PARSE = bison
 PARSE_FLAGS = -v -d --file-prefix=y
 TEST = git --no-pager diff --exit-code --no-index --
+TEX = pdflatex
+TEX_FLAGS = -output-directory $(TEX_DIR)
+TEX_DIR = texbuild
 
 # Debug flags
 debug: PARSE_FLAGS += -t
@@ -57,5 +60,14 @@ tests/%.lexer: tests/%.tokens tests/%.min lexer
 		printf 'returned $$?$(COL_RST)'\n; \
 	fi
 
+doc: grammardoc
+
+grammardoc: mini_l_grammar.pdf
+
+mini_l_grammar.pdf: mini_l_grammar.tex
+	mkdir -p $(TEX_DIR)
+	$(TEX) $(TEX_FLAGS) $<
+	mv $(TEX_DIR)/$@ $@
+
 clean:
-	rm lexer lex.yy.c parser y.tab.c y.tab.h y.output
+	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output $(TEX_DIR)

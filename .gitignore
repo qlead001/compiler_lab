@@ -6,3 +6,7 @@ lexer
 y.tab.*
 y.output
 parser
+
+# TeX Output Files
+texbuild/**
+*.pdf

@@ -1,0 +1,143 @@
+\documentclass{article}[12pt]
+\usepackage[margin=1in]{geometry}
+
+\usepackage{xcolor}
+
+\newcommand{\nonterm}[1]{\textcolor{red}{#1}}
+
+\begin{document}
+
+{
+\noindent \large \bf
+CS152, Spring 2021,
+Mini-L Grammar
+\hfill
+Lab: 021\\
+Name: Quinn Leader \hfill
+Student ID: 862154057 \\
+\noindent\rule{\textwidth}{1pt}
+}
+
+\begin{tabular}{r c l}
+	prog\_start & $\rightarrow$ &
+		functions \\
+	\hline
+
+	functions & $\rightarrow$ &
+		  $\varepsilon$
+		| function functions \\
+	\hline
+
+	function & $\rightarrow$ &
+		  FUNCTION ident SEMICOLON BEGIN\_PARAMS declarations END\_PARAMS
+		  BEGIN\_LOCALS declarations END\_LOCALS BEGIN\_BODY statements END\_BODY \\
+	\hline
+
+	declarations & $\rightarrow$ &
+		  $\varepsilon$
+		| declaration SEMICOLON declarations \\
+	\hline
+
+	declaration & $\rightarrow$ &
+		  identifiers COLON INTEGER
+		| identifiers COLON ARRAY L\_SQUARE\_BRACKET NUMBER R\_SQUARE\_BRACKET
+		  OF INTEGER
+		| identifiers COLON ENUM L\_PAREN identifiers R\_PAREN \\
+	\hline
+
+	identifiers & $\rightarrow$ &
+		  ident
+		| ident COMMA identifiers \\
+	\hline
+
+	ident & $\rightarrow$ &
+		  IDENT \\
+	\hline
+
+	statements & $\rightarrow$ &
+		  $\varepsilon$
+		| statement SEMICOLON statements \\
+	\hline
+
+	statement & $\rightarrow$ &
+		  var ASSIGN expression
+		| IF bool\_exp THEN statements ENDIF
+		| IF bool\_exp THEN statements ELSE statements ENDIF
+		| WHILE bool\_exp BEGINLOOP statements ENDLOOP
+		| DO BEGINLOOP statements ENDLOOP WHILE bool\_exp
+		| READ vars
+		| WRITE vars
+		| CONTINUE
+		| RETURN expression \\
+	\hline
+
+	bool\_exp & $\rightarrow$ &
+		  relation\_and\_exp
+		| relation\_and\_exp OR bool\_exp \\
+	\hline
+
+	relation\_and\_exp & $\rightarrow$ &
+		  relation\_exp
+		| relation\_exp AND relation\_and\_exp \\
+	\hline
+
+	relation\_exp & $\rightarrow$ &
+		  NOT expression comp expression
+		| NOT TRUE
+		| NOT FALSE
+		| NOT L\_PAREN bool\_exp R\_PAREN
+		| expression comp expression
+		| TRUE
+		| FALSE
+		| L\_PAREN bool\_exp R\_PAREN \\
+	\hline
+
+	comp & $\rightarrow$ &
+		  EQ
+		| NEQ
+		| LT
+		| GT
+		| LTE
+		| GTE \\
+	\hline
+
+	expressions & $\rightarrow$ &
+		  $\varepsilon$
+		| expression COMMA expressions \\
+	\hline
+
+	expression & $\rightarrow$ &
+		  multiplicative\_expression
+		| multiplicative\_expression SUB expression
+		| multiplicative\_expression ADD expression \\
+	\hline
+
+	multiplicative\_expression & $\rightarrow$ &
+		  term
+		| term MOD term
+		| term DIV term
+		| term MULT term \\
+	\hline
+
+	term & $\rightarrow$ &
+		  SUB var
+		| SUB NUMBER
+		| SUB L\_PAREN expression R\_PAREN
+		| var
+		| NUMBER
+		| L\_PAREN expression R\_PAREN
+		| ident L\_PAREN expression R\_PAREN
+		| ident L\_PAREN expressions R\_PAREN \\
+	\hline
+
+	vars & $\rightarrow$ &
+		  var
+		| var COMMA vars \\
+	\hline
+
+	var & $\rightarrow$ &
+		  ident
+		| ident L\_SQUARE\_BRACKET expression R\_SQUARE\_BRACKET \\
+\end{tabular}
+
+\end{document}
