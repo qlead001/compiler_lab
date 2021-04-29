@@ -70,4 +70,5 @@ mini_l_grammar.pdf: mini_l_grammar.tex
 	mv $(TEX_DIR)/$@ $@
 
 clean:
-	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output $(TEX_DIR)
+	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output \
+	mini_l_grammar.pdf $(TEX_DIR)
