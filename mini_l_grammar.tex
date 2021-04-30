@@ -3,14 +3,19 @@
 
 \usepackage{xcolor}
 
+% Command for LHS of production
+\newcommand{\prodrule}[1]{#1}
+% Command for grammar non-terminals
 \newcommand{\nonterm}[1]{\textcolor{red}{#1}}
+% Command for grammar terminals
+\newcommand{\term}[1]{#1}
 
 \begin{document}
 
 {
 \noindent \large \bf
 CS152, Spring 2021,
-Mini-L Grammar
+MINI-L Grammar
 \hfill
 Lab: 021\\
 Name: Quinn Leader \hfill
@@ -18,126 +23,126 @@ Student ID: 862154057 \\
 \noindent\rule{\textwidth}{1pt}
 }
 
-\begin{tabular}{r c l}
-	prog\_start & $\rightarrow$ &
-		functions \\
+\begin{tabular}{r c p{10cm}}
+	\prodrule{prog\_start} & $\rightarrow$ &
+		      \nonterm{functions} \\
 	\hline
 
-	functions & $\rightarrow$ &
-		  $\varepsilon$
-		| function functions \\
+	\prodrule{functions} & $\rightarrow$ &
+		        $\varepsilon$
+		$\vert$ \nonterm{function} \nonterm{functions} \\
 	\hline
 
-	function & $\rightarrow$ &
-		  FUNCTION ident SEMICOLON BEGIN\_PARAMS declarations END\_PARAMS
-		  BEGIN\_LOCALS declarations END\_LOCALS BEGIN\_BODY statements END\_BODY \\
+	\prodrule{function} & $\rightarrow$ &
+		        \term{``function''} \nonterm{ident} \term{``;''} \term{``beginparams''} \nonterm{declarations} \term{``endparams''}
+		        \term{``beginlocals''} \nonterm{declarations} \term{``endlocals''} \term{``beginbody''} \nonterm{statements} \term{``endbody''} \\
 	\hline
 
-	declarations & $\rightarrow$ &
-		  $\varepsilon$
-		| declaration SEMICOLON declarations \\
+	\prodrule{declarations} & $\rightarrow$ &
+		        $\varepsilon$
+		$\vert$ \nonterm{declaration} \term{``;''} \nonterm{declarations} \\
 	\hline
 
-	declaration & $\rightarrow$ &
-		  identifiers COLON INTEGER
-		| identifiers COLON ARRAY L\_SQUARE\_BRACKET NUMBER R\_SQUARE\_BRACKET
-		  OF INTEGER
-		| identifiers COLON ENUM L\_PAREN identifiers R\_PAREN \\
+	\prodrule{declaration} & $\rightarrow$ &
+		        \nonterm{identifiers} \term{``:''} \term{``integer''} \newline
+        $\vert$ \nonterm{identifiers} \term{``:''} \term{``array''} \term{``[''} \term{NUMBER} \term{``]''}
+		        \term{``of''} \term{``integer''} \newline
+		$\vert$ \nonterm{identifiers} \term{``:''} \term{``enum''} \term{``(''} \nonterm{identifiers} \term{``)''} \\
 	\hline
 
-	identifiers & $\rightarrow$ &
-		  ident
-		| ident COMMA identifiers \\
+	\prodrule{identifiers} & $\rightarrow$ &
+		        \nonterm{ident} \newline
+		$\vert$ \nonterm{ident} \term{``,''} \nonterm{identifiers} \\
 	\hline
 
-	ident & $\rightarrow$ &
-		  IDENT \\
+	\prodrule{ident} & $\rightarrow$ &
+		        \term{IDENT} \\
 	\hline
 
-	statements & $\rightarrow$ &
-		  $\varepsilon$
-		| statement SEMICOLON statements \\
+	\prodrule{statements} & $\rightarrow$ &
+		        $\varepsilon$
+		$\vert$ \nonterm{statement} \term{``;''} \nonterm{statements} \\
 	\hline
 
-	statement & $\rightarrow$ &
-		  var ASSIGN expression
-		| IF bool\_exp THEN statements ENDIF
-		| IF bool\_exp THEN statements ELSE statements ENDIF
-		| WHILE bool\_exp BEGINLOOP statements ENDLOOP
-		| DO BEGINLOOP statements ENDLOOP WHILE bool\_exp
-		| READ vars
-		| WRITE vars
-		| CONTINUE
-		| RETURN expression \\
+	\prodrule{statement} & $\rightarrow$ &
+		        \nonterm{var} \term{``:=''} \nonterm{expression} \newline
+		$\vert$ \term{``if''} \nonterm{bool\_exp} \term{``then''} \nonterm{statements} \term{``endif''} \newline
+		$\vert$ \term{``if''} \nonterm{bool\_exp} \term{``then''} \nonterm{statements} \term{``else''} \nonterm{statements} \term{``endif''} \newline
+		$\vert$ \term{``while''} \nonterm{bool\_exp} \term{``beginloop''} \nonterm{statements} \term{``endloop''} \newline
+		$\vert$ \term{``do''} \term{``beginloop''} \nonterm{statements} \term{``endloop''} \term{``while''} \nonterm{bool\_exp} \newline
+		$\vert$ \term{``read''} \nonterm{vars} \newline
+		$\vert$ \term{``write''} \nonterm{vars} \newline
+		$\vert$ \term{``continue''} \newline
+		$\vert$ \term{``return''} \nonterm{expression} \\
 	\hline
 
-	bool\_exp & $\rightarrow$ &
-		  relation\_and\_exp
-		| relation\_and\_exp OR bool\_exp \\
+	\prodrule{bool\_exp} & $\rightarrow$ &
+                \nonterm{relation\_and\_exp} \newline
+        $\vert$ \nonterm{relation\_and\_exp} \term{``or''} \nonterm{bool\_exp} \\
 	\hline
 
-	relation\_and\_exp & $\rightarrow$ &
-		  relation\_exp
-		| relation\_exp AND relation\_and\_exp \\
+	\prodrule{relation\_and\_exp} & $\rightarrow$ &
+		        \nonterm{relation\_exp} \newline
+        $\vert$ \nonterm{relation\_exp} \term{``and''} \nonterm{relation\_and\_exp} \\
 	\hline
 
-	relation\_exp & $\rightarrow$ &
-		  NOT expression comp expression
-		| NOT TRUE
-		| NOT FALSE
-		| NOT L\_PAREN bool\_exp R\_PAREN
-		| expression comp expression
-		| TRUE
-		| FALSE
-		| L\_PAREN bool\_exp R\_PAREN \\
+	\prodrule{relation\_exp} & $\rightarrow$ &
+		        \term{``not''} \nonterm{expression} \nonterm{comp} \nonterm{expression} \newline
+		$\vert$ \term{``not''} \term{``true''} \newline
+		$\vert$ \term{``not''} \term{``false''} \newline
+		$\vert$ \term{``not''} \term{``(''} \nonterm{bool\_exp} \term{``)''} \newline
+		$\vert$ \nonterm{expression} \nonterm{comp} \nonterm{expression} \newline
+		$\vert$ \term{``true''} \newline
+		$\vert$ \term{``false''} \newline
+		$\vert$ \term{``(''} \nonterm{bool\_exp} \term{``)''} \\
 	\hline
 
-	comp & $\rightarrow$ &
-		  EQ
-		| NEQ
-		| LT
-		| GT
-		| LTE
-		| GTE \\
+	\prodrule{comp} & $\rightarrow$ &
+		        \term{``==''} 
+		$\vert$ \term{``\textless\textgreater''} 
+		$\vert$ \term{``\textless''} 
+		$\vert$ \term{``\textgreater''} 
+		$\vert$ \term{``\textless=''} 
+		$\vert$ \term{``\textgreater=''} \\
 	\hline
 
-	expressions & $\rightarrow$ &
-		  $\varepsilon$
-		| expression COMMA expressions \\
+	\prodrule{expressions} & $\rightarrow$ &
+		        $\varepsilon$
+		$\vert$ \nonterm{expression} \term{``,''} \nonterm{expressions} \\
 	\hline
 
-	expression & $\rightarrow$ &
-		  multiplicative\_expression
-		| multiplicative\_expression SUB expression
-		| multiplicative\_expression ADD expression \\
+	\prodrule{expression} & $\rightarrow$ &
+		        \nonterm{multiplicative\_expression} \newline
+		$\vert$ \nonterm{multiplicative\_expression} \term{``-''} \nonterm{expression} \newline
+		$\vert$ \nonterm{multiplicative\_expression} \term{``+''} \nonterm{expression} \\
 	\hline
 
-	multiplicative\_expression & $\rightarrow$ &
-		  term
-		| term MOD term
-		| term DIV term
-		| term MULT term \\
+	\prodrule{multiplicative\_expression} & $\rightarrow$ &
+		        \nonterm{term} 
+		$\vert$ \nonterm{term} \term{``\%''} \nonterm{term} 
+		$\vert$ \nonterm{term} \term{``/''} \nonterm{term} 
+		$\vert$ \nonterm{term} \term{``*''} \nonterm{term} \\
 	\hline
 
-	term & $\rightarrow$ &
-		  SUB var
-		| SUB NUMBER
-		| SUB L\_PAREN expression R\_PAREN
-		| var
-		| NUMBER
-		| L\_PAREN expression R\_PAREN
-		| ident L\_PAREN expression R\_PAREN
-		| ident L\_PAREN expressions R\_PAREN \\
+	\prodrule{term} & $\rightarrow$ &
+		        \term{``-''} \nonterm{var} \newline
+		$\vert$ \term{``-''} \term{NUMBER} \newline
+		$\vert$ \term{``-''} \term{``(''} \nonterm{expression} \term{``)''} \newline
+		$\vert$ \nonterm{var} \newline
+		$\vert$ \term{NUMBER} \newline
+		$\vert$ \term{``(''} \nonterm{expression} \term{``)''} \newline
+		$\vert$ \nonterm{ident} \term{``(''} \nonterm{expression} \term{``)''} \newline
+		$\vert$ \nonterm{ident} \term{``(''} \nonterm{expressions} \term{``)''} \\
 	\hline
 
-	vars & $\rightarrow$ &
-		  var
-		| var COMMA vars \\
+	\prodrule{vars} & $\rightarrow$ &
+		        \nonterm{var}
+		$\vert$ \nonterm{var} \term{``,''} \nonterm{vars} \\
 	\hline
 
-	var & $\rightarrow$ &
-		  ident
-		| ident L\_SQUARE\_BRACKET expression R\_SQUARE\_BRACKET \\
+	\prodrule{var} & $\rightarrow$ &
+		        \nonterm{ident}
+		$\vert$ \nonterm{ident} \term{``[''} \nonterm{expression} \term{``]''} \\
 \end{tabular}
 
 \end{document}
