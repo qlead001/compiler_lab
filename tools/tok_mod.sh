@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ "$#" -lt 2 ]; then
-	printf "Usage: $0 MODIFIER FILE [OPTION] [SEP]\n\n" >&2
+	printf "Usage: %s MODIFIER FILE [OPTION] [SEP]\n\n" "$0" >&2
 	printf "Modifiers:\tprint_lex\tPhase 1 lexer rules\n" >&2
 	printf "\t\ttoken_lex\tPhase 2 lexer rules\n" >&2
 	printf "\t\ttokens\t\tPrint tokens separated by SEP or ' '\n" >&2
@@ -37,7 +37,7 @@ case "$1" in
 	'tokens')
 		SEP=' '
 		if [ "$#" -ge 3 ]; then
-			SEP=$3
+			SEP="$3"
 		fi
 		sed -rn 's/^(\S+)\s+([A-Z_]+)$/\2<SEPARATOR>/p' "$2" \
 		| tr -d '\n' \
@@ -51,14 +51,14 @@ case "$1" in
 	'custom')
 		SEP=' '
 		if [ "$#" -ge 4 ]; then
-			SEP=$4
+			SEP="$4"
 		fi
 		if [ "$#" -lt 3 ]; then
 			echo "Error: Missing format string" >&2
 			exit 1
 		fi
-		FMT=printf "$3" | sed -r 's/\\n/<NEWLINE>/'
-		sed -rn 's/^(\S+)\s+([A-Z_]+)$/'"$3"'<SEPARATOR>/p' "$2" \
+        FMT=$(printf "%s" "$3" | sed -r 's/\\n/<NEWLINE>/')
+		sed -rn 's/^(\S+)\s+([A-Z_]+)$/'"$FMT"'<SEPARATOR>/p' "$2" \
 		| tr -d '\n' \
 		| sed -r -e 's/<SEPARATOR>$/\n/' \
 			 -e 's/<SEPARATOR>/'"$SEP"'/g' \
