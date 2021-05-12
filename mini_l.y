@@ -1,4 +1,5 @@
 /* bison parser for MINI-L programming language */
+
 %{
 #include <stdio.h>
 #include <string.h>
@@ -7,6 +8,9 @@ void printErr(const char *msg);
 extern int currLine;
 extern int currPos;
 FILE * yyin;
+
+#define	PROD_RULE(rule)		(printf((rule)))
+#define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
 %}
 
 %union{
@@ -32,9 +36,10 @@ FILE * yyin;
 	ASSIGN ":="
 %token	<sval>	IDENT "identifier"
 %token	<ival>	NUMBER "number"
+%token	UMINUS " -"
 %left	L_PAREN R_PAREN
 %left	L_SQUARE_BRACKET R_SQUARE_BRACKET
-%right	UMINUS " -"
+%right	UMINUS
 %left	MULT DIV MOD
 %left	ADD SUB
 %left	LT LTE GT GTE EQ NEQ
@@ -45,146 +50,297 @@ FILE * yyin;
 
 %%
 prog_start:
-	functions
+	functions {
+		PROD_RULE("prog_start -> functions\n");
+		}
 	;
 
 functions:
-	  /* epsilon */
-	| function functions
+	  /* epsilon */ {
+		PROD_RULE("functions -> epsilon\n");
+		}
+	| function functions {
+		PROD_RULE("functions -> function functions\n");
+		}
 	;
 
 function:
 	  FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
-	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY
+	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY {
+		PROD_RULE("function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n");
+		}
 	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
-	  BEGIN_LOCALS declarations END_LOCALS error END_BODY {
+	  BEGIN_LOCALS declarations END_LOCALS error {
 		printErr("invalid function, missing body");
+		yyerrok;
+		}
+	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
+	  error BEGIN_BODY statements END_BODY {
+		printErr("invalid function, missing locals");
+		yyclearin; yyerrok;
+		}
+	| FUNCTION ident SEMICOLON error BEGIN_LOCALS declarations
+	  END_LOCALS BEGIN_BODY statements END_BODY {
+		printErr("invalid function, missing parameters");
+		yyclearin; yyerrok;
+		}
+	| error {
+		printErr("invalid function");
 		yyclearin; yyerrok;
 		}
 	;
 
 declarations:
-	  /* epsilon */
-	| declaration SEMICOLON declarations
-	| error SEMICOLON {
+	  /* epsilon */ {
+		PROD_RULE("declarations -> epsilon\n");
+		}
+	| declaration SEMICOLON declarations {
+		PROD_RULE("declarations -> declaration SEMICOLON declarations\n");
+		}
+	;
+
+declaration:
+	  identifiers COLON INTEGER {
+		PROD_RULE("declaration -> identifiers COLON INTEGER\n");
+		}
+	| identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET
+	  OF INTEGER {
+		PROD_RULE1("declaration -> identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER\n", $5);
+		}
+	| identifiers COLON ENUM L_PAREN identifiers R_PAREN {
+		PROD_RULE("declaration -> identifiers COLON ENUM L_PAREN identifiers R_PAREN\n");
+		}
+	| error {
 		printErr("invalid declaration");
 		yyclearin; yyerrok;
 		}
 	;
 
-declaration:
-	  identifiers COLON INTEGER
-	| identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET
-	  OF INTEGER
-	| identifiers COLON ENUM L_PAREN identifiers R_PAREN
-	;
-
 identifiers:
-	  ident
-	| ident COMMA identifiers
+	  ident {
+		PROD_RULE("identifiers -> ident\n");
+		}
+	| ident COMMA identifiers {
+		PROD_RULE("identifiers -> ident COMMA identifiers\n");
+		}
 	;
 
 ident:
-	  IDENT
+	  IDENT {
+		PROD_RULE1("ident -> IDENT %s\n", $1);
+		}
 	;
 
 statements:
-	  /* epsilon */
-	| statement SEMICOLON statements
+	  /* epsilon */ {
+		PROD_RULE("statements -> epsilon\n");
+		}
+	| statement SEMICOLON statements {
+		PROD_RULE("statements -> statement SEMICOLON statements\n");
+		}
 	;
 
 statement:
-	  var ASSIGN expression
-	| IF bool_exp THEN statements ENDIF
-	| IF bool_exp THEN statements ELSE statements ENDIF
-	| WHILE bool_exp BEGINLOOP statements ENDLOOP
-	| DO BEGINLOOP statements ENDLOOP WHILE bool_exp
-	| READ vars
-	| WRITE vars
-	| CONTINUE
-	| RETURN expression
+	  var ASSIGN expression {
+		PROD_RULE("statement -> var ASSIGN expression\n");
+		}
+	| IF bool_exp THEN statements ENDIF {
+		PROD_RULE("statement -> IF bool_exp THEN statements ENDIF\n");
+		}
+	| IF bool_exp THEN statements ELSE statements ENDIF {
+		PROD_RULE("statement -> IF bool_exp THEN statements ELSE statements ENDIF\n");
+		}
+	| WHILE bool_exp BEGINLOOP statements ENDLOOP {
+		PROD_RULE("statement -> WHILE bool_exp BEGINLOOP statements ENDLOOP\n");
+		}
+	| DO BEGINLOOP statements ENDLOOP WHILE bool_exp {
+		PROD_RULE("statement -> DO BEGINLOOP statements ENDLOOP WHILE bool_exp\n");
+		}
+	| READ vars {
+		PROD_RULE("statement -> READ vars\n");
+		}
+	| WRITE vars {
+		PROD_RULE("statement -> WRITE vars\n");
+		}
+	| CONTINUE {
+		PROD_RULE("statement -> CONTINUE\n");
+		}
+	| RETURN expression {
+		PROD_RULE("statement -> RETURN expression\n");
+		}
+	| error {
+		printErr("invalid statement");
+		yyclearin; yyerrok;
+		}
 	;
 
 bool_exp:
-	  relation_and_exp
-	| relation_and_exp OR bool_exp
+	  relation_and_exp {
+		PROD_RULE("bool_exp -> relation_and_exp\n");
+		}
+	| relation_and_exp OR bool_exp {
+		PROD_RULE("bool_exp -> relation_and_exp OR bool_exp\n");
+		}
 /*
-	| relation_and_exp OR relation_and_exp
+	| relation_and_exp OR relation_and_exp {
+		PROD_RULE("bool_exp -> relation_and_exp OR relation_and_exp\n");
+		}
 */
 	;
 
 relation_and_exp:
-	  relation_exp
-	| relation_exp AND relation_and_exp
+	  relation_exp {
+		PROD_RULE("relation_and_exp -> relation_exp\n");
+		}
+	| relation_exp AND relation_and_exp {
+		PROD_RULE("relation_and_exp -> relation_exp AND relation_and_exp\n");
+		}
 /*
-	| relation_exp AND relation_exp
+	| relation_exp AND relation_exp {
+		PROD_RULE("relation_and_exp -> relation_exp AND relation_exp\n");
+		}
 */
 	;
 
 relation_exp:
-	  NOT expression comp expression
-	| NOT TRUE
-	| NOT FALSE
-	| NOT L_PAREN bool_exp R_PAREN
-	| expression comp expression
-	| TRUE
-	| FALSE
-	| L_PAREN bool_exp R_PAREN
+	  NOT expression comp expression {
+		PROD_RULE("relation_exp -> NOT expression comp expression\n");
+		}
+	| NOT TRUE {
+		PROD_RULE("relation_exp -> NOT TRUE\n");
+		}
+	| NOT FALSE {
+		PROD_RULE("relation_exp -> NOT FALSE\n");
+		}
+	| NOT L_PAREN bool_exp R_PAREN {
+		PROD_RULE("relation_exp -> NOT L_PAREN bool_exp R_PAREN\n");
+		}
+	| expression comp expression {
+		PROD_RULE("relation_exp -> expression comp expression\n");
+		}
+	| TRUE {
+		PROD_RULE("relation_exp -> TRUE\n");
+		}
+	| FALSE {
+		PROD_RULE("relation_exp -> FALSE\n");
+		}
+	| L_PAREN bool_exp R_PAREN {
+		PROD_RULE("relation_exp -> L_PAREN bool_exp R_PAREN\n");
+		}
 	;
 
 comp:
-	  EQ
-	| NEQ
-	| LT
-	| GT
-	| LTE
-	| GTE
+	  EQ {
+		PROD_RULE("comp -> EQ\n");
+		}
+	| NEQ {
+		PROD_RULE("comp -> NEQ\n");
+		}
+	| LT {
+		PROD_RULE("comp -> LT\n");
+		}
+	| GT {
+		PROD_RULE("comp -> GT\n");
+		}
+	| LTE {
+		PROD_RULE("comp -> LTE\n");
+		}
+	| GTE {
+		PROD_RULE("comp -> GTE\n");
+		}
 	;
 
 expressions:
-	  /* epsilon */
-	| expression COMMA expressions
+	  /* epsilon */ {
+		PROD_RULE("expressions -> epsilon\n");
+		}
+	| expression COMMA expressions {
+		PROD_RULE("expressions -> expression COMMA expressions\n");
+		}
 	;
 
 expression:
-	  multiplicative_expression
-	| multiplicative_expression SUB expression
-	| multiplicative_expression ADD expression
+	  multiplicative_expression {
+		PROD_RULE("expression -> multiplicative_expression\n");
+		}
+	| multiplicative_expression SUB expression {
+		PROD_RULE("expression -> multiplicative_expression SUB expression\n");
+		}
+	| multiplicative_expression ADD expression {
+		PROD_RULE("expression -> multiplicative_expression ADD expression\n");
+		}
 /*
-	| multiplicative_expression SUB multiplicative_expression
-	| multiplicative_expression ADD multiplicative_expression
+	| multiplicative_expression SUB multiplicative_expression {
+		PROD_RULE("expression -> multiplicative_expression SUB multiplicative_expression\n");
+		}
+	| multiplicative_expression ADD multiplicative_expression {
+		PROD_RULE("expression -> multiplicative_expression ADD multiplicative_expression\n");
+		}
 */
+	| error {
+		printErr("invalid expression");
+		yyclearin; yyerrok;
+		}
 	;
 
 multiplicative_expression:
-	  term
-	| term MOD term
-	| term DIV term
-	| term MULT term
+	  term {
+		PROD_RULE("multiplicative_expression -> term\n");
+		}
+	| term MOD term {
+		PROD_RULE("multiplicative_expression -> term MOD term\n");
+		}
+	| term DIV term {
+		PROD_RULE("multiplicative_expression -> term DIV term\n");
+		}
+	| term MULT term {
+		PROD_RULE("multiplicative_expression -> term MULT term\n");
+		}
 	;
 
 term:
-	  SUB var %prec UMINUS
-	| SUB NUMBER %prec UMINUS
-	| SUB L_PAREN expression R_PAREN %prec UMINUS
-	| var
-	| NUMBER
-	| L_PAREN expression R_PAREN
-	| ident L_PAREN expression R_PAREN
-	| ident L_PAREN expressions R_PAREN
-/* Wrong?
-	| ident L_PAREN R_PAREN
-*/
+	  SUB var %prec UMINUS {
+		PROD_RULE("term -> SUB var\n");
+		}
+	| SUB NUMBER %prec UMINUS {
+		PROD_RULE1("term -> SUB NUMBER %d\n", $2);
+		}
+	| SUB L_PAREN expression R_PAREN %prec UMINUS {
+		PROD_RULE("term -> SUB L_PAREN expression R_PAREN\n");
+		}
+	| var {
+		PROD_RULE("term -> var\n");
+		}
+	| NUMBER {
+		PROD_RULE1("term -> NUMBER %d\n", $1);
+		}
+	| L_PAREN expression R_PAREN {
+		PROD_RULE("term -> L_PAREN expression R_PAREN\n");
+		}
+	| ident L_PAREN expression R_PAREN {
+		PROD_RULE("term -> ident L_PAREN expression R_PAREN\n");
+		}
+	| ident L_PAREN expressions R_PAREN {
+		PROD_RULE("term -> ident L_PAREN expressions R_PAREN\n");
+		}
 	;
 
 vars:
-	  var
-	| var COMMA vars
+	  var {
+		PROD_RULE("vars -> var\n");
+		}
+	| var COMMA vars {
+		PROD_RULE("vars -> var COMMA vars\n");
+		}
 	;
 
 var:
-	  ident
-	| ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET
+	  ident {
+		PROD_RULE("var -> ident\n");
+		}
+	| ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET {
+		PROD_RULE("var -> ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");
+		}
 	;
 %%
 
