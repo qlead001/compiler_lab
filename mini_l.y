@@ -8,9 +8,12 @@ void printErr(const char *msg);
 extern int currLine;
 extern int currPos;
 FILE * yyin;
+int ERROR = 0;
 
 #define	PROD_RULE(rule)		(printf((rule)))
 #define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
+
+#define	RECOVER()		ERROR = 0; yyerrok
 %}
 
 %union{
@@ -70,23 +73,23 @@ function:
 		PROD_RULE("function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n");
 		}
 	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
-	  BEGIN_LOCALS declarations END_LOCALS error {
+	  BEGIN_LOCALS declarations END_LOCALS error FUNCTION {
 		printErr("invalid function, missing body");
-		yyerrok;
+		YYBACKUP(FUNCTION,(YYSTYPE)FUNCTION); RECOVER();
 		}
 	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
-	  error BEGIN_BODY statements END_BODY {
+	  error BEGIN_BODY {
 		printErr("invalid function, missing locals");
-		yyclearin; yyerrok;
-		}
-	| FUNCTION ident SEMICOLON error BEGIN_LOCALS declarations
-	  END_LOCALS BEGIN_BODY statements END_BODY {
+		RECOVER();
+		} statements END_BODY
+	| FUNCTION ident SEMICOLON error BEGIN_LOCALS {
 		printErr("invalid function, missing parameters");
-		yyclearin; yyerrok;
+		RECOVER();
 		}
-	| error {
+	  declarations END_LOCALS BEGIN_BODY statements END_BODY
+	| error FUNCTION {
 		printErr("invalid function");
-		yyclearin; yyerrok;
+		YYBACKUP(FUNCTION,(YYSTYPE)FUNCTION); RECOVER();
 		}
 	;
 
@@ -112,7 +115,7 @@ declaration:
 		}
 	| error {
 		printErr("invalid declaration");
-		yyclearin; yyerrok;
+		yyclearin; RECOVER();
 		}
 	;
 
@@ -170,7 +173,7 @@ statement:
 		}
 	| error {
 		printErr("invalid statement");
-		yyclearin; yyerrok;
+		yyclearin; RECOVER();
 		}
 	;
 
@@ -181,11 +184,6 @@ bool_exp:
 	| relation_and_exp OR bool_exp {
 		PROD_RULE("bool_exp -> relation_and_exp OR bool_exp\n");
 		}
-/*
-	| relation_and_exp OR relation_and_exp {
-		PROD_RULE("bool_exp -> relation_and_exp OR relation_and_exp\n");
-		}
-*/
 	;
 
 relation_and_exp:
@@ -195,11 +193,6 @@ relation_and_exp:
 	| relation_exp AND relation_and_exp {
 		PROD_RULE("relation_and_exp -> relation_exp AND relation_and_exp\n");
 		}
-/*
-	| relation_exp AND relation_exp {
-		PROD_RULE("relation_and_exp -> relation_exp AND relation_exp\n");
-		}
-*/
 	;
 
 relation_exp:
@@ -269,17 +262,9 @@ expression:
 	| multiplicative_expression ADD expression {
 		PROD_RULE("expression -> multiplicative_expression ADD expression\n");
 		}
-/*
-	| multiplicative_expression SUB multiplicative_expression {
-		PROD_RULE("expression -> multiplicative_expression SUB multiplicative_expression\n");
-		}
-	| multiplicative_expression ADD multiplicative_expression {
-		PROD_RULE("expression -> multiplicative_expression ADD multiplicative_expression\n");
-		}
-*/
 	| error {
 		printErr("invalid expression");
-		yyclearin; yyerrok;
+		yyclearin; RECOVER();
 		}
 	;
 
@@ -387,10 +372,13 @@ void yyerror(const char *msg) {
 
 #define	NSPACES	37
 void printErr(const char *msg) {
-	char spaces[NSPACES+1];
-	int i;
-	for (i = 0; i < NSPACES; i++)
-		spaces[i] = ' ';
-	spaces[NSPACES] = '\0';
-	fprintf(stderr, "%s\t%s\n", spaces, msg);
+	if (!ERROR) {
+		ERROR = 1;
+		char spaces[NSPACES+1];
+		int i;
+		for (i = 0; i < NSPACES; i++)
+			spaces[i] = ' ';
+		spaces[NSPACES] = '\0';
+		fprintf(stderr, "%s\t%s\n", spaces, msg);
+	}
 }

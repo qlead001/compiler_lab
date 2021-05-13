@@ -97,13 +97,19 @@ DIGIT	[0-9]
 		printf("Error at line %d, column %d: "
 			"identifier \"%s\" must begin with "
 			"a letter\n",currLine, currPos, yytext);
+		currLine += yyleng;
+#ifdef	LEXER
 		exit(1);
+#endif
 		}
 [a-zA-Z][a-zA-Z0-9_]*"_"	{
 		printf("Error at line %d, column %d: "
 			"identifier \"%s\" cannot end with an "
 			"underscore\n",currLine, currPos, yytext);
+		currLine += yyleng;
+#ifdef	LEXER
 		exit(1);
+#endif
 		}
 
 	/* White Space */
@@ -115,7 +121,12 @@ DIGIT	[0-9]
 		printf("Error at line %d, column %d: "
 			"unrecognized symbol \"%s\"\n",
 			currLine, currPos, yytext);
+#ifdef	LEXER
 		exit(1);
+#else
+		currLine += yyleng;
+		return yytext[0];
+#endif
 		}
 %%
 
