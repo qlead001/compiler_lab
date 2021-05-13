@@ -10,3 +10,6 @@ parser
 # TeX Output Files
 texbuild/**
 *.pdf
+
+# Zip Files
+*.zip

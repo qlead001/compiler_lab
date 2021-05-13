@@ -1,4 +1,4 @@
-.PHONY: all debug clean test doc grammardoc \
+.PHONY: all debug clean test doc grammardoc zip \
 testlex tests/%.lexer testparse tests/%.parser
 
 # Variables for fancy output
@@ -87,6 +87,29 @@ mini_l_grammar.pdf: mini_l_grammar.tex
 	$(TEX) $(TEX_FLAGS) $<
 	mv $(TEX_DIR)/$@ $@
 
+zip: quinn_leader_parser.zip
+
+# Generate a temporary directory
+ifndef TMP_DIR
+$(warning No TMP_DIR)
+ifeq ($(firstword $(filter zip,$(MAKECMDGOALS))),zip)
+$(warning Making dir)
+quinn_leader_parser.zip: private TMP_DIR := \
+			 $(shell mktemp -d tmp_parser.XXXXXXXXXX)
+endif
+endif
+
+quinn_leader_parser.zip: mini_l.lex mini_l.y mini_l_grammar.pdf \
+			 template_makefile
+	@echo "mktemp -d tmp_parser.XXXXXXXXXX"
+	@echo "$(TMP_DIR)"
+	cp -t '$(TMP_DIR)' $(wordlist 1, 3, $?)
+	printf '# Generated at %s\n\n%s\n' "$$(date)" \
+		"$$(cat $(word 4, $?))" > '$(TMP_DIR)/Makefile'
+	zip -j $@ $(addprefix $(TMP_DIR)/, $(wordlist 1, 3, $?) Makefile)
+	rm -rf '$(TMP_DIR)'
+
 clean:
 	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output \
-	mini_l_grammar.pdf $(TEX_DIR)
+	mini_l_grammar.pdf $(TEX_DIR) quinn_leader_parser.zip \
+	$(if $(value TMP_DIR),$(TMP_DIR),tmp_parser.*)
