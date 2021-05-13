@@ -1,0 +1,13 @@
+function invalid
+beginbody
+endbody
+
+function main;
+beginparams
+endparams
+beginlocals
+a : integer;
+endlocals
+beginbody
+a := 1 + 2 * 3;
+endbody

@@ -1,0 +1,19 @@
+function;
+beginparams
+endparams
+beginlocals
+foo : integer;
+endlocals
+beginbody
+foo := 0;
+endbody
+
+function main;
+beginparams
+endparams
+beginlocals
+a : integer;
+endlocals
+beginbody
+a := 1 + 2 * 3;
+endbody

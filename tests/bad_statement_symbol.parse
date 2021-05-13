@@ -1,0 +1,26 @@
+Syntax error at line 8, columns 2-3:	unexpected $undefined, expecting [ or :=
+                                     	invalid statement
+Syntax error at line 8, columns 4-5:	unexpected number, expecting ;
+                                     	invalid statement
+Syntax error at line 8, columns 6-7:	unexpected +, expecting ;
+                                     	invalid statement
+Syntax error at line 8, columns 8-9:	unexpected number, expecting ;
+                                     	invalid statement
+Syntax error at line 8, columns 10-11:	unexpected *, expecting ;
+                                     	invalid statement
+Syntax error at line 8, columns 12-13:	unexpected number, expecting ;
+                                     	invalid statement
+ident -> IDENT main
+declarations -> epsilon
+ident -> IDENT a
+identifiers -> ident
+declaration -> identifiers COLON INTEGER
+declarations -> epsilon
+declarations -> declaration SEMICOLON declarations
+ident -> IDENT a
+Error at line 8, column 2: unrecognized symbol "="
+statements -> statement SEMICOLON
+function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY
+functions -> epsilon
+functions -> function functions
+prog_start -> functions

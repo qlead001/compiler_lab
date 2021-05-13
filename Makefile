@@ -1,4 +1,5 @@
-.PHONY: all debug clean test testlex tests/%.lexer doc grammardoc
+.PHONY: all debug clean test doc grammardoc \
+testlex tests/%.lexer testparse tests/%.parser
 
 # Variables for fancy output
 COL_RST := $(shell tput sgr0)
@@ -25,6 +26,7 @@ debug: LEX_FLAGS += -d
 
 # Get list of tests
 LEX_TESTS := $(addsuffix .lexer, $(basename $(wildcard tests/*.tokens)))
+PARSE_TESTS := $(addsuffix .parser, $(basename $(wildcard tests/*.parse)))
 
 all: parser lexer
 
@@ -42,13 +44,29 @@ lexer: lex.yy.c
 lex.yy.c: mini_l.lex
 	$(LEX) $(LEX_FLAGS) -o $@ $^
 
-test: testlex
+test: testlex testparse
 
 testlex: $(LEX_TESTS)
 
 tests/%.lexer: tests/%.tokens tests/%.min lexer
 	@echo "$(COL_SMO)[Lexer]$(COL_RST) Running $* test..."; \
-	./lexer $(word 2, $?) | $(TEST) $< -; \
+	./lexer $(word 2, $?) 2>&1 | $(TEST) $< -; \
+	if [ "$$?" -eq "0" ]; \
+	then \
+		printf '$(COL_GRN)Test Passed$(COL_RST)\n'; \
+	elif [ "$$?" -eq "1" ]; \
+	then \
+		printf '$(COL_RED)Test Failed$(COL_RST)\n'; \
+	else \
+		printf '$(COL_YEL)Warning $(TEST) ' \
+		printf 'returned $$?$(COL_RST)'\n; \
+	fi
+
+testparse: $(PARSE_TESTS)
+
+tests/%.parser: tests/%.parse tests/%.min parser
+	@echo "$(COL_SMO)[Parser]$(COL_RST) Running $* test..."; \
+	./parser $(word 2, $?) 2>&1 | $(TEST) $< -; \
 	if [ "$$?" -eq "0" ]; \
 	then \
 		printf '$(COL_GRN)Test Passed$(COL_RST)\n'; \

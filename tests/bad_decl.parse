@@ -1,0 +1,23 @@
+Syntax error at line 5, columns 2-9:	unexpected integer, expecting : or ","
+                                     	invalid declaration
+ident -> IDENT main
+declarations -> epsilon
+ident -> IDENT a
+declarations -> epsilon
+declarations -> declaration SEMICOLON declarations
+ident -> IDENT a
+var -> ident
+term -> NUMBER 1
+multiplicative_expression -> term
+term -> NUMBER 2
+term -> NUMBER 3
+multiplicative_expression -> term
+multiplicative_expression -> term MULT multiplicative_expression
+expression -> multiplicative_expression
+expression -> multiplicative_expression ADD expression
+statement -> var ASSIGN expression
+statements -> statement SEMICOLON
+function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY
+functions -> epsilon
+functions -> function functions
+prog_start -> functions
