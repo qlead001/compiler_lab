@@ -60,7 +60,7 @@ Student ID: 862154057 \\
 	\hline
 
 	\prodrule{statements} & $\rightarrow$ &
-		        $\varepsilon$
+		        \nonterm{statement} \term{``;''}
 		$\vert$ \nonterm{statement} \term{``;''} \nonterm{statements} \\
 	\hline
 
@@ -108,6 +108,7 @@ Student ID: 862154057 \\
 
 	\prodrule{expressions} & $\rightarrow$ &
 		        $\varepsilon$
+		$\vert$ \nonterm{expression}
 		$\vert$ \nonterm{expression} \term{``,''} \nonterm{expressions} \\
 	\hline
 
@@ -119,9 +120,9 @@ Student ID: 862154057 \\
 
 	\prodrule{multiplicative\_expression} & $\rightarrow$ &
 		        \nonterm{term} 
-		$\vert$ \nonterm{term} \term{``\%''} \nonterm{term} 
-		$\vert$ \nonterm{term} \term{``/''} \nonterm{term} 
-		$\vert$ \nonterm{term} \term{``*''} \nonterm{term} \\
+		$\vert$ \nonterm{term} \term{``\%''} \nonterm{multiplicative\_expression} 
+		$\vert$ \nonterm{term} \term{``/''} \nonterm{multiplicative\_expression} 
+		$\vert$ \nonterm{term} \term{``*''} \nonterm{multiplicative\_expression} \\
 	\hline
 
 	\prodrule{term} & $\rightarrow$ &
@@ -131,7 +132,6 @@ Student ID: 862154057 \\
 		$\vert$ \nonterm{var} \newline
 		$\vert$ \term{NUMBER} \newline
 		$\vert$ \term{``(''} \nonterm{expression} \term{``)''} \newline
-		$\vert$ \nonterm{ident} \term{``(''} \nonterm{expression} \term{``)''} \newline
 		$\vert$ \nonterm{ident} \term{``(''} \nonterm{expressions} \term{``)''} \\
 	\hline
 

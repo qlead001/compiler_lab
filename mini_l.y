@@ -135,8 +135,8 @@ ident:
 	;
 
 statements:
-	  /* epsilon */ {
-		PROD_RULE("statements -> epsilon\n");
+	  statement SEMICOLON {
+		PROD_RULE("statements -> statement SEMICOLON\n");
 		}
 	| statement SEMICOLON statements {
 		PROD_RULE("statements -> statement SEMICOLON statements\n");
@@ -247,6 +247,9 @@ expressions:
 	  /* epsilon */ {
 		PROD_RULE("expressions -> epsilon\n");
 		}
+	| expression {
+		PROD_RULE("expressions -> expression\n");
+		}
 	| expression COMMA expressions {
 		PROD_RULE("expressions -> expression COMMA expressions\n");
 		}
@@ -272,14 +275,14 @@ multiplicative_expression:
 	  term {
 		PROD_RULE("multiplicative_expression -> term\n");
 		}
-	| term MOD term {
-		PROD_RULE("multiplicative_expression -> term MOD term\n");
+	| term MOD multiplicative_expression {
+		PROD_RULE("multiplicative_expression -> term MOD multiplicative_expression\n");
 		}
-	| term DIV term {
-		PROD_RULE("multiplicative_expression -> term DIV term\n");
+	| term DIV multiplicative_expression {
+		PROD_RULE("multiplicative_expression -> term DIV multiplicative_expression\n");
 		}
-	| term MULT term {
-		PROD_RULE("multiplicative_expression -> term MULT term\n");
+	| term MULT multiplicative_expression {
+		PROD_RULE("multiplicative_expression -> term MULT multiplicative_expression\n");
 		}
 	;
 
@@ -301,9 +304,6 @@ term:
 		}
 	| L_PAREN expression R_PAREN {
 		PROD_RULE("term -> L_PAREN expression R_PAREN\n");
-		}
-	| ident L_PAREN expression R_PAREN {
-		PROD_RULE("term -> ident L_PAREN expression R_PAREN\n");
 		}
 	| ident L_PAREN expressions R_PAREN {
 		PROD_RULE("term -> ident L_PAREN expressions R_PAREN\n");
