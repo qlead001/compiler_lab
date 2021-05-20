@@ -28,12 +28,15 @@ debug: LEX_FLAGS += -d
 LEX_TESTS := $(addsuffix .lexer, $(basename $(wildcard tests/*.tokens)))
 PARSE_TESTS := $(addsuffix .parser, $(basename $(wildcard tests/*.parse)))
 
-all: parser lexer
+all: compiler parser lexer
 
 debug: all
 
-parser: y.tab.c lex.yy.c
+compiler: y.tab.c lex.yy.c
 	$(CC) -o $@ $^ $(LIB)
+
+parser: y.tab.c lex.yy.c
+	$(CC) -o $@ $^ -D PARSER $(LIB)
 
 y.tab.c: mini_l.y
 	$(PARSE) $(PARSE_FLAGS) $^
@@ -91,9 +94,7 @@ zip: quinn_leader_parser.zip
 
 # Generate a temporary directory
 ifndef TMP_DIR
-$(warning No TMP_DIR)
 ifeq ($(firstword $(filter zip,$(MAKECMDGOALS))),zip)
-$(warning Making dir)
 quinn_leader_parser.zip: private TMP_DIR := \
 			 $(shell mktemp -d tmp_parser.XXXXXXXXXX)
 endif
@@ -110,6 +111,7 @@ quinn_leader_parser.zip: mini_l.lex mini_l.y mini_l_grammar.pdf \
 	rm -rf '$(TMP_DIR)'
 
 clean:
-	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output \
-	mini_l_grammar.pdf $(TEX_DIR) quinn_leader_parser.zip \
-	$(if $(value TMP_DIR),$(TMP_DIR),tmp_parser.*)
+	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output compiler \
+	mini_l_grammar.pdf $(TEX_DIR) quinn_leader_parser.zip $(if \
+	$(value TMP_DIR),$(TMP_DIR),tmp_parser.*) \
+	milRun.stat *.mil

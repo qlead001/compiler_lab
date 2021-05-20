@@ -10,8 +10,13 @@ extern int currPos;
 FILE * yyin;
 int ERROR = 0;
 
-#define	PROD_RULE(rule)		(printf((rule)))
-#define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
+#ifdef	PARSER
+	#define	PROD_RULE(rule)		(printf((rule)))
+	#define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
+#else
+	#define	PROD_RULE(rule)
+	#define	PROD_RULE1(rule, arg)
+#endif
 
 #define	RECOVER()		ERROR = 0; yyerrok
 %}

@@ -7,9 +7,19 @@ y.tab.*
 y.output
 parser
 
+# Compiler Executable
+compiler
+
+# Compiler Output Files
+milRun.stat
+/*.mil
+
 # TeX Output Files
 texbuild/**
 *.pdf
 
 # Zip Files
 *.zip
+
+# Temporary Directories
+tmp_parser.*/**
