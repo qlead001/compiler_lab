@@ -5,10 +5,14 @@
 #include <string.h>
 void yyerror(const char *msg);
 void printErr(const char *msg);
+void semErr(const char *msg);
+void err(const char *msg);
 extern int currLine;
 extern int currPos;
 FILE * yyin;
 int ERROR = 0;
+int numErr = 0;
+int hasMain = 0;
 
 #ifdef	PARSER
 	#define	PROD_RULE(rule)		(printf((rule)))
@@ -22,15 +26,23 @@ int ERROR = 0;
 %}
 
 %union{
-	char* sval;
- 	int ival;
+	char* identName;
+ 	int num;
+	struct S {
+		char* code;
+	} statement;
+	struct E {
+		char* place;
+		char* code;
+		int isArr;
+	} expression;
 }
 
 %define parse.error verbose
 %define parse.lac full
 %locations
-%printer { fprintf(yyo, "NUMBER %d", $$); } <ival>
-%printer { fprintf(yyo, "IDENT %s", $$); } <sval>
+%printer { fprintf(yyo, "NUMBER %d", $$); } <num>
+%printer { fprintf(yyo, "IDENT %s", $$); } <identName>
 %start 	prog_start
 %token	FUNCTION "function" BEGIN_PARAMS "beginparams" END_PARAMS "endparams"
 	BEGIN_LOCALS "beginlocals" END_LOCALS "endlocals" BEGIN_BODY "beginbody"
@@ -42,8 +54,8 @@ int ERROR = 0;
 	LT "<" GT ">" LTE "<=" GTE ">=" SEMICOLON ";" COLON ":" COMMA ","
 	L_PAREN "(" R_PAREN ")" L_SQUARE_BRACKET "[" R_SQUARE_BRACKET "]"
 	ASSIGN ":="
-%token	<sval>	IDENT "identifier"
-%token	<ival>	NUMBER "number"
+%token	<identName>	IDENT "identifier"
+%token	<num>		NUMBER "number"
 %token	UMINUS " -"
 %left	L_PAREN R_PAREN
 %left	L_SQUARE_BRACKET R_SQUARE_BRACKET
@@ -56,6 +68,10 @@ int ERROR = 0;
 %left	OR
 %right	ASSIGN
 
+%type	<statement>	statement
+%type	<expression>	expression
+%type	<identName>	ident
+
 %%
 prog_start:
 	functions {
@@ -66,6 +82,10 @@ prog_start:
 functions:
 	  /* epsilon */ {
 		PROD_RULE("functions -> epsilon\n");
+
+		if (!hasMain) {
+			semErr("missing main function.");
+		}
 		}
 	| function functions {
 		PROD_RULE("functions -> function functions\n");
@@ -76,6 +96,10 @@ function:
 	  FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
 	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY {
 		PROD_RULE("function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n");
+
+		if (strcmp($2, "main") == 0) {
+			hasMain = 1;
+		}
 		}
 	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
 	  BEGIN_LOCALS declarations END_LOCALS error FUNCTION {
@@ -138,6 +162,7 @@ ident:
 		PROD_RULE1("ident -> IDENT %s\n", $1);
 		}
 	;
+
 
 statements:
 	  statement SEMICOLON {
@@ -351,6 +376,17 @@ int main(int argc, char ** argv) {
 }
 
 void yyerror(const char *msg) {
+	err(msg);
+}
+
+void semErr(const char *msg) {
+#ifndef	PARSER
+	err(msg);
+#endif
+}
+
+void err(const char *msg) {
+	numErr++;
 	if (strlen(msg) > 15) {
 		char dest[15];
 		strncpy(dest, msg, 14);
@@ -378,6 +414,7 @@ void yyerror(const char *msg) {
 #define	NSPACES	37
 void printErr(const char *msg) {
 	if (!ERROR) {
+		numErr++;
 		ERROR = 1;
 		char spaces[NSPACES+1];
 		int i;

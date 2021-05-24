@@ -73,11 +73,11 @@ DIGIT	[0-9]
 
 	/* Identifiers */
 [a-zA-Z]([a-zA-Z0-9_]*[a-zA-Z0-9])?	{
-		currPos += yyleng; yylval.sval = yytext; return IDENT;
+		currPos += yyleng; yylval.identName = yytext; return IDENT;
 		}
 
 	/* Numbers */
-{DIGIT}+	{currPos += yyleng; yylval.ival = atoi(yytext); return NUMBER;}
+{DIGIT}+	{currPos += yyleng; yylval.num = atoi(yytext); return NUMBER;}
 
 	/* Special Symbols */
 ";"		{currPos += yyleng; return SEMICOLON;}
@@ -148,9 +148,9 @@ int main(int argc, char ** argv) {
 
 		printf("%s", tokenStr[token]);
 		if (token == IDENT)
-			printf(" %s\n", yylval.sval);
+			printf(" %s\n", yylval.identName);
 		else if (token == NUMBER)
-			printf(" %d\n", yylval.ival);
+			printf(" %d\n", yylval.num);
 		else printf("\n");
 	}
 

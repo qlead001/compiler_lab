@@ -2,8 +2,8 @@
 #ifndef __LEXER__
 #define __LEXER__
 struct yylval {
-	int ival;
-	char *sval;
+	int num;
+	char *identName;
 } yylval;
 
 enum Tokens {

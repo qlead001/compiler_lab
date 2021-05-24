@@ -12,7 +12,7 @@ COL_YEL := $(shell tput setaf 3)
 CC = gcc
 LEX = flex
 LEX_FLAGS = # empty
-LIB = -lfl
+LIB = -lfl -iquote include
 PARSE = bison
 PARSE_FLAGS = -v -d --file-prefix=y
 TEST = git --no-pager diff --exit-code --no-index --
@@ -38,13 +38,13 @@ compiler: y.tab.c lex.yy.c
 parser: y.tab.c lex.yy.c
 	$(CC) -o $@ $^ -D PARSER $(LIB)
 
-y.tab.c: mini_l.y
+y.tab.c: src/mini_l.y
 	$(PARSE) $(PARSE_FLAGS) $^
 
 lexer: lex.yy.c
 	$(CC) -o $@ $^ -D LEXER $(LIB)
 
-lex.yy.c: mini_l.lex
+lex.yy.c: src/mini_l.lex
 	$(LEX) $(LEX_FLAGS) -o $@ $^
 
 test: testlex testparse
@@ -85,7 +85,7 @@ doc: grammardoc
 
 grammardoc: mini_l_grammar.pdf
 
-mini_l_grammar.pdf: mini_l_grammar.tex
+mini_l_grammar.pdf: doc/mini_l_grammar.tex
 	mkdir -p $(TEX_DIR)
 	$(TEX) $(TEX_FLAGS) $<
 	mv $(TEX_DIR)/$@ $@
@@ -100,14 +100,15 @@ quinn_leader_parser.zip: private TMP_DIR := \
 endif
 endif
 
-quinn_leader_parser.zip: mini_l.lex mini_l.y mini_l_grammar.pdf \
-			 template_makefile
+quinn_leader_parser.zip: src/mini_l.lex src/mini_l.y mini_l_grammar.pdf \
+			 release/template_makefile
 	@echo "mktemp -d tmp_parser.XXXXXXXXXX"
 	@echo "$(TMP_DIR)"
 	cp -t '$(TMP_DIR)' $(wordlist 1, 3, $?)
 	printf '# Generated at %s\n\n%s\n' "$$(date)" \
 		"$$(cat $(word 4, $?))" > '$(TMP_DIR)/Makefile'
-	zip -j $@ $(addprefix $(TMP_DIR)/, $(wordlist 1, 3, $?) Makefile)
+	zip -j $@ $(addprefix $(TMP_DIR)/, $(notdir $(wordlist 1, 3, $?)) \
+		Makefile)
 	rm -rf '$(TMP_DIR)'
 
 clean:
