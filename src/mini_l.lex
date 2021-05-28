@@ -143,7 +143,7 @@ int main(int argc, char ** argv) {
 
 	enum Tokens token;
 
-	while (token = yylex()) {
+	while ((token = yylex())) {
 		if (token == END) continue;
 
 		printf("%s", tokenStr[token]);

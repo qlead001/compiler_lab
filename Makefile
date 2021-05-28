@@ -10,9 +10,12 @@ COL_YEL := $(shell tput setaf 3)
 
 # Tools
 CC = gcc
+# Enable most warnings expect for those caused by flex
+CC_FLAGS = -Wall -Wextra -Wno-unused-function -Wno-implicit-function-declaration
+CC_FLAGS += -Wformat=2
 LEX = flex
 LEX_FLAGS = # empty
-LIB = -lfl -iquote include
+LIB = -lfl -iquote include -iquote cstring/include
 PARSE = bison
 PARSE_FLAGS = -v -d --file-prefix=y
 TEST = git --no-pager diff --exit-code --no-index --
@@ -33,16 +36,16 @@ all: compiler parser lexer
 debug: all
 
 compiler: y.tab.c lex.yy.c
-	$(CC) -o $@ $^ $(LIB)
+	$(CC) $(CC_FLAGS) -o $@ $^ $(LIB)
 
 parser: y.tab.c lex.yy.c
-	$(CC) -o $@ $^ -D PARSER $(LIB)
+	$(CC) $(CC_FLAGS) -Wno-unused-parameter -o $@ $^ -D PARSER $(LIB)
 
 y.tab.c: src/mini_l.y
 	$(PARSE) $(PARSE_FLAGS) $^
 
 lexer: lex.yy.c
-	$(CC) -o $@ $^ -D LEXER $(LIB)
+	$(CC) $(CC_FLAGS) -o $@ $^ -D LEXER $(LIB)
 
 lex.yy.c: src/mini_l.lex
 	$(LEX) $(LEX_FLAGS) -o $@ $^
