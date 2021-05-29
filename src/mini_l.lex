@@ -4,6 +4,11 @@
 #ifdef LEXER
 	#include "lexer.h"
 #else
+#	ifdef PARSER
+		#include "parser_str.h"
+#	else
+		#include "str.h"
+#	endif
 	#include "y.tab.h"
 	#define YY_USER_ACTION \
 		yylloc.first_line = yylloc.last_line; \
@@ -73,7 +78,8 @@ DIGIT	[0-9]
 
 	/* Identifiers */
 [a-zA-Z]([a-zA-Z0-9_]*[a-zA-Z0-9])?	{
-		currPos += yyleng; yylval.identName = yytext; return IDENT;
+		currPos += yyleng; yylval.identName = strFrom(yytext);
+		return IDENT;
 		}
 
 	/* Numbers */

@@ -35,7 +35,7 @@ all: compiler parser lexer
 
 debug: all
 
-compiler: y.tab.c lex.yy.c
+compiler: y.tab.c lex.yy.c cstring/str.c
 	$(CC) $(CC_FLAGS) -o $@ $^ $(LIB)
 
 parser: y.tab.c lex.yy.c

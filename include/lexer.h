@@ -1,10 +1,12 @@
 /* Structures to print out tokens from lexer */
 #ifndef _LEXER_H
-#define _LEXER_H
+#define _LEXER_H	1
+
+#define	strFrom(s)	(s)
 
 struct yylval {
 	int num;
-	char *identName;
+	char* identName;
 } yylval;
 
 enum Tokens {

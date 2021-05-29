@@ -3,6 +3,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+
 void yyerror(const char *msg);
 void printErr(const char *msg);
 void semErr(const char *msg);
@@ -15,9 +16,11 @@ int numErr = 0;
 int hasMain = 0;
 
 #ifdef	PARSER
+	#include "parser_str.h"
 	#define	PROD_RULE(rule)		(printf((rule)))
 	#define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
 #else
+	#include "str.h"
 	#define	PROD_RULE(rule)
 	#define	PROD_RULE1(rule, arg)
 #endif
@@ -26,14 +29,14 @@ int hasMain = 0;
 %}
 
 %union{
-	char* identName;
+	str identName;
  	int num;
 	struct S {
-		char* code;
+		str code;
 	} statement;
 	struct E {
-		char* place;
-		char* code;
+		str place;
+		str code;
 		int isArr;
 	} expression;
 }
@@ -97,7 +100,7 @@ function:
 	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY {
 		PROD_RULE("function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n");
 
-		if (strcmp($2, "main") == 0) {
+		if (strcmp(STRSTR($2), "main") == 0) {
 			hasMain = 1;
 		}
 		}
@@ -159,7 +162,7 @@ identifiers:
 
 ident:
 	  IDENT {
-		PROD_RULE1("ident -> IDENT %s\n", $1);
+		PROD_RULE1("ident -> IDENT %s\n", STRSTR($1));
 		}
 	;
 
