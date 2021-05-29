@@ -1,6 +1,7 @@
 /* Structures to print out tokens from lexer */
-#ifndef __LEXER__
-#define __LEXER__
+#ifndef _LEXER_H
+#define _LEXER_H
+
 struct yylval {
 	int num;
 	char *identName;
@@ -119,4 +120,5 @@ char *tokenStr[] = {
 [R_SQUARE_BRACKET]	"R_SQUARE_BRACKET",
 [ASSIGN]	"ASSIGN",
 };
-#endif
+
+#endif /* lexer.h */
