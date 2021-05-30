@@ -10,7 +10,7 @@
 #define appendStr(s1, s2)	(s1)
 
 #define	strFrom(s)	(s)
-#define	newStr(s)	""
+#define	newStr()	""
 #define	freeStr(s)
 
 typedef char* str;
