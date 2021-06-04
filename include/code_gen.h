@@ -16,84 +16,69 @@ typedef struct expression {
 	str code;
 } expr;
 
-/* start:
- * 	holds the name of the label at the
- * 	start of code
- * end:
- * 	holds the name of the label at the
- * 	end of code
- * code:
- * 	holds the instructions that evaluate
- * 	to the statement
- */
-typedef struct statement {
-	str start;
-	str end;
+typedef str stmt;
+
+typedef struct expressions {
+	strArr place;
 	str code;
-} stmt;
+} exprs;
 
-#define	STR_ARR_CAP	16
+typedef struct vars {
+	strArr arrIndex;
+	strArr names;
+} vars;
 
-typedef struct strArr {
-	str* ptr;
-	int  len;
-	int  cap;
-} strArr;
-
-/*
-typedef struct enumType {
+typedef struct var {
+	str arrIndex;
 	str name;
-	strArr vals;
-} enumType;
+} var;
 
-typedef struct enumArr {
-	enumType* ptr;
-	int  len;
-	int  cap;
-} enumArr;
-*/
-
-int seenContinue, seenMain;
+strArr loopStack;
 
 strArr funcTable;
 strArr arrTable;
 strArr intTable;
-/*
-enumArr enumTable;
-*/
+strArr enumTable;
+
+int arrSizeTable[128];
+
+#define	IS_FUNC(i)	(contains(funcTable, (i)) > 0)
+#define	IS_ARR(i)	(contains(arrTable, (i)) > 0)
+#define	IS_INT(i)	(contains(intTable, (i)) > 0)
+#define	IS_ENUM(i)	(contains(enumTable, (i)) > 0)
+
+#define	SIZEOF(arr)	(arrSizeTable[contains(arrTable, (arr))])
+
+void initArr(void);
+
+int tempCount;
+int labelCount;
 
 str newTemp(void);
 str newLabel(void);
 
-str concatln(str l1, str l2);
+str instruction(const char* op, ...);
 
-int arrContains(strArr arr, str s);
-void arrAppend(strArr* arr, str s);
-void arrEmpty(strArr* arr);
-void arrFree(strArr* arr);
+stmt gen_func(stmt params, stmt locals, stmt body);
+stmt gen_params(strArr idents);
+stmt gen_decls(strArr idents);
 
-str gen_func(str params, str locals, str body);
-str gen_params(str decls);
+stmt gen_int(str ident);
+stmt gen_arr(str ident);
 
-str gen_int(strArr idents);
-str gen_arr(strArr idents);
-/*
-str gen_enum(strArr idents, strArr enum_idents);
-*/
-
-stmt gen_assign(str v, str exp);
+stmt gen_assign(var v, expr exp);
 stmt gen_if(expr boolexp, stmt code);
 stmt gen_if_else(expr boolexp, stmt trueCode, stmt falseCode);
-stmt gen_while(expr boolexp, str code);
-stmt gen_do_while(expr boolexp, str code);
-stmt gen_read(strArr v);
-stmt gen_write(strArr v);
+stmt gen_while(expr boolexp, stmt code);
+stmt gen_do_while(expr boolexp, stmt code);
+stmt gen_read(vars v);
+stmt gen_write(vars v);
 stmt gen_continue(void);
 stmt gen_return(expr exp);
 
-expr gen_op(expr e1, expr e2, char* op);
+expr gen_op(const char* op, expr e1, expr e2);
 expr gen_not(expr e1);
 
-expr gen_func_call(str func, strArr params);
+expr gen_func_call(str func, exprs paramsExp);
 
 #endif /* code_gen.h */

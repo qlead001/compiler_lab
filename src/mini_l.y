@@ -6,7 +6,6 @@
 
 void yyerror(const char *msg);
 void printErr(const char *msg);
-void semErr(const char *msg);
 void err(const char *msg);
 extern int currLine;
 extern int currPos;
@@ -23,6 +22,7 @@ int hasMain = 0;
 	#include "str.h"
 	#define	PROD_RULE(rule)
 	#define	PROD_RULE1(rule, arg)
+	#define	semErr(msg)	(err((msg)))
 #endif
 
 #define	RECOVER()		ERROR = 0; yyerrok

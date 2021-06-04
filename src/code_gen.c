@@ -1,0 +1,290 @@
+#include<stdlib.h>
+#include<stdio.h>
+
+#include "code_gen.h"
+#include "str.h"
+
+extern void err(const char *msg);
+
+/* Allocate new strArr's for globals */
+void initArr(void) {
+	loopStack = newStrArr();
+	funcTable = newStrArr();
+	arrTable = newStrArr();
+	intTable = newStrArr();
+	enumTable = newStrArr();
+}
+
+/* Create a string for a new temp variable */
+str newTemp(void) {
+	char strNum[11];
+	str temp = strFrom("__temp__");
+	
+	sprintf(strNum, "%d", tempCount++);
+
+	appendStr(&temp, strNum);
+	return temp;
+}
+
+/* Create a string for a new label */
+str newLabel(void) {
+	char strNum[11];
+	str label = strFrom("__label__");
+	
+	sprintf(strNum, "%d", labelCount++);
+
+	appendStr(&label, strNum);
+	return label;
+}
+
+/* Create a intermediate instruction for op
+ *  Parameters:
+ *  	op	Operator for instruction
+ *      str*	arguments for instruction
+ *      NULL	terminate variadic args
+ *  Return Value:
+ *  	str of "op arg1, arg2, ..., argn"
+ */
+str instruction(const char* op, ...) {
+	str* s;
+	str instruct = strFrom(op);
+
+	va_list args;
+	va_start(args, op);
+
+	s = va_arg(args, str*);
+	if (s == NULL) return instruct;
+	appendStr(&instruct, " ");
+	append(&instruct, *s);
+
+	while ((s = va_arg(args, str*))) {
+		appendStr(&instruct, ", ");
+		append(&instruct, *s);
+	}
+
+	return instruct;
+}
+
+stmt gen_func(str ident, stmt params, stmt locals, stmt body) {
+	stmt func = instruction("func", &ident, NULL);
+	concatln(&func, &params, &locals, &body);
+	appendStr(&func, "\nendfunc\n");
+	return func;
+}
+
+/* Take a list of identifiers and generate declarations.
+ * After each declaration generate initialise variable
+ * as a parameter with $n.
+ */
+stmt gen_params(strArr idents) {
+	int i;
+	char arg[12] = "$";
+	str ident, argStr, line;
+	stmt param;
+	
+	for (i = 0; i < ARRLEN(idents); i++) {
+		sprintf(arg+1, "%d", i);
+		argStr = strFrom(arg);
+		ident = GETSTR(idents, i);
+
+		if (i == 0) 
+			param = gen_int(ident);
+		else {
+			line = gen_int(ident);
+			concatln(&param, &line, NULL);
+			freeStr(&line);
+		}
+
+		line = instruction("=", &ident, &argStr, NULL);
+		concatln(&param, &line, NULL);
+		freeStr(&line);
+		freeStr(&argStr);
+	}
+
+	return param;
+}
+
+stmt gen_decls(strArr idents) {
+	int i, num;
+	str ident;
+	stmt decls, line;
+
+	for (i = 0; i < ARRLEN(idents); i++) {
+		ident = GETSTR(idents, i);
+
+		if (IS_INT(ident) || IS_ENUM(ident))
+			line = gen_int(ident);
+		else if (IS_ARR(ident))
+			line = gen_arr(ident);
+		
+		if (i == 0)
+			decls = line;
+		else {
+			concatln(&decls, &line, NULL);
+			freeStr(&line);
+		}
+
+		if ((num = contains(enumTable, ident)) != -1) {
+			char buf[11];
+			sprintf(buf, "%d", num);
+			str strNum = strFrom(buf);
+			line = instruction("=", &ident, &strNum, NULL);
+			concatln(&decls, &line, NULL);
+			freeStr(&line);
+		}
+	}
+	
+	return decls;
+}
+
+stmt gen_int(str ident) {
+	return instruction(".", &ident, NULL);
+}
+
+stmt gen_arr(str ident) {
+	char aSize[11];
+	str arrSize;
+	sprintf(aSize, "%d", SIZEOF(ident));
+	arrSize = strFrom(aSize);
+	str line = instruction(".[]", &ident, &arrSize, NULL);
+	freeStr(&arrSize);
+	return line;
+}
+
+/* TODO */
+stmt gen_assign(var v, expr exp) {
+}
+
+stmt gen_if(expr boolexp, stmt code) {
+	str mid = newLabel();
+	str end = newLabel();
+
+	stmt if_st = newStr();
+	append(&if_st, boolexp.code);
+	str line1 = instruction(":?", &mid, &(boolexp.place), NULL);
+	str line2 = instruction(":=", &end, NULL);
+	str line3 = instruction(":", &mid, NULL);
+	str line4 = instruction(":", &end, NULL);
+	concatln(&if_st, &line1, &line2, &line3, &code, &line4, NULL);
+	freeStr(&mid); freeStr(&end);
+	return if_st;
+}
+
+stmt gen_if_else(expr boolexp, stmt trueCode, stmt falseCode) {
+	str mid = newLabel();
+	str end = newLabel();
+
+	stmt if_st = newStr();
+	append(&if_st, boolexp.code);
+	str line1 = instruction(":?", &mid, &(boolexp.place), NULL);
+	str line2 = instruction(":=", &end, NULL);
+	str line3 = instruction(":", &mid, NULL);
+	str line4 = instruction(":", &end, NULL);
+	concatln(&if_st, &line1, &falseCode, &line2, &line3, &trueCode,
+		&line4, NULL);
+	freeStr(&line1); freeStr(&line2); freeStr(&line3); freeStr(&line4);
+	freeStr(&mid); freeStr(&end);
+	return if_st;
+}
+
+stmt gen_while(expr boolexp, stmt code) {
+	str begin = pop(&loopStack);
+	str mid = newLabel();
+	str end = newLabel();
+
+	stmt wh_st = newStr();
+	append(&wh_st, boolexp.code);
+	str line0 = instruction(":", &begin, NULL);
+	str line1 = instruction(":?", &mid, &(boolexp.place), NULL);
+	str line2 = instruction(":=", &end, NULL);
+	str line3 = instruction(":", &mid, NULL);
+	str line4 = instruction(":=", &begin, NULL);
+	str line5 = instruction(":", &end, NULL);
+	concatln(&wh_st, &line0, &line1, &line2, &line3, &code, &line4,
+		&line5, NULL);
+
+	freeStr(&line0); freeStr(&line1); freeStr(&line2); freeStr(&line3);
+	freeStr(&line4); freeStr(&line5); freeStr(&begin); freeStr(&mid);
+	freeStr(&end);
+
+	return wh_st;
+}
+
+stmt gen_do_while(expr boolexp, stmt code) {
+	str begin = newLabel();
+	str mid = pop(&loopStack);
+
+	stmt wh_st = newStr();
+	str line0 = instruction(":", &begin, NULL);
+	append(&wh_st, line0);
+	str line1 = instruction(":", &mid, NULL);
+	str line2 = instruction(":?", &begin, &(boolexp.place), NULL);
+	concatln(&wh_st, &code, &(boolexp.code), &line1, &line2, NULL);
+
+	freeStr(&line0); freeStr(&line1); freeStr(&line2);
+	freeStr(&begin); freeStr(&mid);
+
+	return wh_st;
+}
+
+/* TODO */
+stmt gen_read(vars v);
+/* TODO */
+stmt gen_write(vars v);
+
+stmt gen_continue(void) {
+	if (ARRLEN(loopStack) <= 0) {
+		err("Continue outside of loop.");
+		return newStr();
+	}
+	str label = peek(loopStack);
+	return instruction(":=", &label, NULL);
+}
+
+/* TODO */
+stmt gen_return(expr exp);
+
+expr gen_op(const char* op, expr e1, expr e2) {
+	expr e;
+	e.place = newTemp();
+	e.code = newStr();
+	append(&(e.code), e1.code);
+	str line = instruction(op, e.place, e1.place, e2.place, NULL);
+	concatln(&(e.code), &(e2.code), &line, NULL);
+	freeStr(&line);
+	return e;
+}
+
+expr gen_not(expr e1) {
+	expr e;
+	e.place = newTemp();
+	e.code = newStr();
+	append(&(e.code), e1.code);
+	str line = instruction("!", e.place, e1.place, NULL);
+	concatln(&(e.code), &(e2.code), &line, NULL);
+	freeStr(&line);
+	return e;
+}
+
+expr gen_func_call(str func, exprs paramExp) {
+	int i;
+	expr e;
+	e.place = newTemp();
+	e.code = newStr();
+	append(&(e.code), paramExp.code);
+	str line, line2;
+	str ident;
+	strArr params = paramExp.place;
+	for (i = 0; i < ARRLEN(params); i++) {
+		ident = GETSTR(params, i);
+		line = instruction("param", &ident, NULL);
+		concatln(&(e.code), &line, NULL);
+		freeStr(&line);
+	}
+	line = instruction(".", &(e.place), NULL);
+	line2 = instruction("call", &func, &(e.place), NULL);
+	concatln(&(e.code), &line, &line2, NULL);
+	freeStr(&line);
+	freeStr(&line2);
+	return e;
+}
