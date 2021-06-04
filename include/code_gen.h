@@ -19,17 +19,17 @@ typedef struct expression {
 typedef str stmt;
 
 typedef struct expressions {
-	strArr place;
+	strArr places;
 	str code;
 } exprs;
 
 typedef struct vars {
-	strArr arrIndex;
+	exprs arrIndex;
 	strArr names;
 } vars;
 
 typedef struct var {
-	str arrIndex;
+	expr arrIndex;
 	str name;
 } var;
 
@@ -59,7 +59,7 @@ str newLabel(void);
 
 str instruction(const char* op, ...);
 
-stmt gen_func(stmt params, stmt locals, stmt body);
+stmt gen_func(str ident, stmt params, stmt locals, stmt body);
 stmt gen_params(strArr idents);
 stmt gen_decls(strArr idents);
 
@@ -77,6 +77,7 @@ stmt gen_continue(void);
 stmt gen_return(expr exp);
 
 expr gen_op(const char* op, expr e1, expr e2);
+expr gen_uminus(expr e1);
 expr gen_not(expr e1);
 
 expr gen_func_call(str func, exprs paramsExp);

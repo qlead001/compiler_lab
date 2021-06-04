@@ -1,4 +1,5 @@
 #include<stdlib.h>
+#include<stdarg.h>
 #include<stdio.h>
 
 #include "code_gen.h"
@@ -151,8 +152,20 @@ stmt gen_arr(str ident) {
 	return line;
 }
 
-/* TODO */
 stmt gen_assign(var v, expr exp) {
+	str line;
+	stmt assign = newStr();
+	append(&assign, exp.code);
+	if (IS_INT(v.name))
+		line = instruction("=", &(v.name), &(exp.place), NULL);
+	else if (IS_ARR(v.name)) {
+		concatln(&assign, &(v.arrIndex.code), NULL);
+		line = instruction("[]=", &(v.name), &(v.arrIndex.place),
+				&(exp.place), NULL);
+	}
+	concatln(&assign, &line, NULL);
+	freeStr(&line);
+	return assign;
 }
 
 stmt gen_if(expr boolexp, stmt code) {
@@ -227,10 +240,49 @@ stmt gen_do_while(expr boolexp, stmt code) {
 	return wh_st;
 }
 
-/* TODO */
-stmt gen_read(vars v);
-/* TODO */
-stmt gen_write(vars v);
+stmt gen_read(vars v) {
+	str ident, line;
+	int i;
+	stmt read = newStr();
+	append(&read, v.arrIndex.code);
+	for (i = 0; i < ARRLEN(v.names); i++) {
+		ident = GETSTR(v.names, i);
+		if (IS_INT(ident))
+			line = instruction(".<", &ident, NULL);
+		else
+			line = instruction(".[]<", &ident,
+				&(ARR(v.arrIndex.places)[i]), NULL);
+		if (STRLEN(read) == 0)
+			appendFree(&read, &line);
+		else {
+			concatln(&read, &line, NULL);
+			freeStr(&line);
+		}
+	}
+	return read;
+}
+
+stmt gen_write(vars v) {
+	str ident, line;
+	int i;
+	stmt write = newStr();
+	append(&write, v.arrIndex.code);
+	for (i = 0; i < ARRLEN(v.names); i++) {
+		ident = GETSTR(v.names, i);
+		if (IS_INT(ident))
+			line = instruction(".>", &ident, NULL);
+		else
+			line = instruction(".[]>", &ident,
+				&(ARR(v.arrIndex.places)[i]), NULL);
+		if (STRLEN(write) == 0)
+			appendFree(&write, &line);
+		else {
+			concatln(&write, &line, NULL);
+			freeStr(&line);
+		}
+	}
+	return write;
+}
 
 stmt gen_continue(void) {
 	if (ARRLEN(loopStack) <= 0) {
@@ -241,17 +293,35 @@ stmt gen_continue(void) {
 	return instruction(":=", &label, NULL);
 }
 
-/* TODO */
-stmt gen_return(expr exp);
+stmt gen_return(expr exp) {
+	stmt ret = newStr();
+	append(&ret, exp.code);
+	str line = instruction("ret", &(exp.place), NULL);
+	concatln(&ret, &line, NULL);
+	freeStr(&line);
+	return ret;
+}
 
 expr gen_op(const char* op, expr e1, expr e2) {
 	expr e;
 	e.place = newTemp();
 	e.code = newStr();
 	append(&(e.code), e1.code);
-	str line = instruction(op, e.place, e1.place, e2.place, NULL);
+	str line = instruction(op, &(e.place), &(e1.place), &(e2.place), NULL);
 	concatln(&(e.code), &(e2.code), &line, NULL);
 	freeStr(&line);
+	return e;
+}
+
+expr gen_uminus(expr e1) {
+	expr e;
+	e.place = newTemp();
+	e.code = newStr();
+	append(&(e.code), e1.code);
+	str zero = strFrom("0");
+	str line = instruction("-", &(e.place), &zero, &(e1.place), NULL);
+	concatln(&(e.code), &line, NULL);
+	freeStr(&line); freeStr(&zero);
 	return e;
 }
 
@@ -260,13 +330,19 @@ expr gen_not(expr e1) {
 	e.place = newTemp();
 	e.code = newStr();
 	append(&(e.code), e1.code);
-	str line = instruction("!", e.place, e1.place, NULL);
-	concatln(&(e.code), &(e2.code), &line, NULL);
+	str line = instruction("!", &(e.place), &(e1.place), NULL);
+	concatln(&(e.code), &line, NULL);
 	freeStr(&line);
 	return e;
 }
 
 expr gen_func_call(str func, exprs paramExp) {
+	if (!IS_FUNC(func)) {
+		str msg = strFrom(STRSTR(func));
+		appendStr(&msg, " has not been defined as a function.");
+		err(STRSTR(msg));
+		freeStr(&msg);
+	}
 	int i;
 	expr e;
 	e.place = newTemp();
@@ -274,7 +350,7 @@ expr gen_func_call(str func, exprs paramExp) {
 	append(&(e.code), paramExp.code);
 	str line, line2;
 	str ident;
-	strArr params = paramExp.place;
+	strArr params = paramExp.places;
 	for (i = 0; i < ARRLEN(params); i++) {
 		ident = GETSTR(params, i);
 		line = instruction("param", &ident, NULL);
