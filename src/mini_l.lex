@@ -78,7 +78,7 @@ DIGIT	[0-9]
 
 	/* Identifiers */
 [a-zA-Z]([a-zA-Z0-9_]*[a-zA-Z0-9])?	{
-		currPos += yyleng; yylval.identName = strFrom(yytext);
+		currPos += yyleng; yylval.strval = strFrom(yytext);
 		return IDENT;
 		}
 
@@ -154,7 +154,7 @@ int main(int argc, char ** argv) {
 
 		printf("%s", tokenStr[token]);
 		if (token == IDENT)
-			printf(" %s\n", yylval.identName);
+			printf(" %s\n", yylval.strval);
 		else if (token == NUMBER)
 			printf(" %d\n", yylval.num);
 		else printf("\n");

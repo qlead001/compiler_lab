@@ -42,14 +42,15 @@ strArr enumTable;
 
 int arrSizeTable[128];
 
-#define	IS_FUNC(i)	(contains(funcTable, (i)) > 0)
-#define	IS_ARR(i)	(contains(arrTable, (i)) > 0)
-#define	IS_INT(i)	(contains(intTable, (i)) > 0)
-#define	IS_ENUM(i)	(contains(enumTable, (i)) > 0)
+#define	IS_FUNC(i)	(contains(funcTable, (i)) >= 0)
+#define	IS_ARR(i)	(contains(arrTable, (i)) >= 0)
+#define	IS_INT(i)	(contains(intTable, (i)) >= 0)
+#define	IS_ENUM(i)	(contains(enumTable, (i)) >= 0)
 
 #define	SIZEOF(arr)	(arrSizeTable[contains(arrTable, (arr))])
 
 void initArr(void);
+void dumpVars(void);
 
 int tempCount;
 int labelCount;

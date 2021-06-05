@@ -1,6 +1,7 @@
 #include<stdlib.h>
 #include<stdarg.h>
 #include<stdio.h>
+#include<string.h>
 
 #include "code_gen.h"
 #include "str.h"
@@ -14,6 +15,14 @@ void initArr(void) {
 	arrTable = newStrArr();
 	intTable = newStrArr();
 	enumTable = newStrArr();
+}
+
+void dumpVars(void) {
+	dumpArr(&loopStack);
+	dumpArr(&arrTable);
+	dumpArr(&intTable);
+	dumpArr(&enumTable);
+	memset(arrSizeTable, 0, 128*sizeof(int));
 }
 
 /* Create a string for a new temp variable */
@@ -132,6 +141,7 @@ stmt gen_decls(strArr idents) {
 			line = instruction("=", &ident, &strNum, NULL);
 			concatln(&decls, &line, NULL);
 			freeStr(&line);
+			freeStr(&strNum);
 		}
 	}
 	
@@ -305,10 +315,9 @@ stmt gen_return(expr exp) {
 expr gen_op(const char* op, expr e1, expr e2) {
 	expr e;
 	e.place = newTemp();
-	e.code = newStr();
-	append(&(e.code), e1.code);
+	e.code = instruction(".", &(e.place), NULL);
 	str line = instruction(op, &(e.place), &(e1.place), &(e2.place), NULL);
-	concatln(&(e.code), &(e2.code), &line, NULL);
+	concatln(&(e.code), &(e1.code), &(e2.code), &line, NULL);
 	freeStr(&line);
 	return e;
 }
@@ -316,11 +325,10 @@ expr gen_op(const char* op, expr e1, expr e2) {
 expr gen_uminus(expr e1) {
 	expr e;
 	e.place = newTemp();
-	e.code = newStr();
-	append(&(e.code), e1.code);
+	e.code = instruction(".", &(e.place), NULL);
 	str zero = strFrom("0");
 	str line = instruction("-", &(e.place), &zero, &(e1.place), NULL);
-	concatln(&(e.code), &line, NULL);
+	concatln(&(e.code), &(e1.code), &line, NULL);
 	freeStr(&line); freeStr(&zero);
 	return e;
 }
@@ -328,10 +336,9 @@ expr gen_uminus(expr e1) {
 expr gen_not(expr e1) {
 	expr e;
 	e.place = newTemp();
-	e.code = newStr();
-	append(&(e.code), e1.code);
+	e.code = instruction(".", &(e.place), NULL);
 	str line = instruction("!", &(e.place), &(e1.place), NULL);
-	concatln(&(e.code), &line, NULL);
+	concatln(&(e.code), &(e1.code), &line, NULL);
 	freeStr(&line);
 	return e;
 }
@@ -346,8 +353,8 @@ expr gen_func_call(str func, exprs paramExp) {
 	int i;
 	expr e;
 	e.place = newTemp();
-	e.code = newStr();
-	append(&(e.code), paramExp.code);
+	e.code = instruction(".", &(e.place), NULL);
+	concatln(&(e.code), &(paramExp.code), NULL);
 	str line, line2;
 	str ident;
 	strArr params = paramExp.places;

@@ -6,7 +6,7 @@
 
 struct yylval {
 	int num;
-	char* identName;
+	char* strval;
 } yylval;
 
 enum Tokens {
