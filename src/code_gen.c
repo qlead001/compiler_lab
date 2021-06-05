@@ -6,6 +6,8 @@
 #include "code_gen.h"
 #include "str.h"
 
+#define free(a)
+
 extern void err(const char *msg);
 
 /* Allocate new strArr's for globals */
@@ -77,7 +79,7 @@ str instruction(const char* op, ...) {
 
 stmt gen_func(str ident, stmt params, stmt locals, stmt body) {
 	stmt func = instruction("func", &ident, NULL);
-	concatln(&func, &params, &locals, &body);
+	concatln(&func, &params, &locals, &body, NULL);
 	appendStr(&func, "\nendfunc\n");
 	return func;
 }
@@ -92,7 +94,7 @@ stmt gen_params(strArr idents) {
 	str ident, argStr, line;
 	stmt param;
 	
-	for (i = 0; i < ARRLEN(idents); i++) {
+	for (i = 0; i < ARRLEN(idents)-1; i++) {
 		sprintf(arg+1, "%d", i);
 		argStr = strFrom(arg);
 		ident = GETSTR(idents, i);
@@ -110,6 +112,7 @@ stmt gen_params(strArr idents) {
 		freeStr(&line);
 		freeStr(&argStr);
 	}
+	if(i==0) param = newStr();
 
 	return param;
 }
@@ -119,7 +122,7 @@ stmt gen_decls(strArr idents) {
 	str ident;
 	stmt decls, line;
 
-	for (i = 0; i < ARRLEN(idents); i++) {
+	for (i = 0; i < ARRLEN(idents)-1; i++) {
 		ident = GETSTR(idents, i);
 
 		if (IS_INT(ident) || IS_ENUM(ident))
@@ -144,6 +147,7 @@ stmt gen_decls(strArr idents) {
 			freeStr(&strNum);
 		}
 	}
+	if (i == 0) decls = newStr();
 	
 	return decls;
 }

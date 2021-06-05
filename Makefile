@@ -93,29 +93,47 @@ mini_l_grammar.pdf: doc/mini_l_grammar.tex
 	$(TEX) $(TEX_FLAGS) $<
 	mv $(TEX_DIR)/$@ $@
 
-zip: quinn_leader_parser.zip
+zip: quinn_leader_compiler.zip
+	rm -rf '$(TMP_DIR)'
 
 # Generate a temporary directory
 ifndef TMP_DIR
 ifeq ($(firstword $(filter zip,$(MAKECMDGOALS))),zip)
-quinn_leader_parser.zip: private TMP_DIR := \
-			 $(shell mktemp -d tmp_parser.XXXXXXXXXX)
+zip: TMP_DIR := $(shell mktemp -d tmp_zip.XXXXXXXXXX)
 endif
 endif
+
+quinn_leader_compiler.zip: src/mini_l.lex src/mini_l.y cstring/include/str.h \
+			   cstring/str.c include/code_gen.h src/code_gen.c \
+			   release/template_makefile
+	@echo "mktemp -d tmp_zip.XXXXXXXXXX"
+	@echo "$(TMP_DIR)"
+	cp -t '$(TMP_DIR)' $(wordlist 2, $(words $?), foo $?)
+	printf '# Generated at %s\n\n%s\n' "$$(date)" \
+		"$$(cat $(lastword $?))" > '$(TMP_DIR)/Makefile'
+	zip -j $@ $(addprefix $(TMP_DIR)/, $(notdir $(wordlist 2, \
+		$(words $?), foo $?)) Makefile)
+
+## Generate a temporary directory
+#ifndef TMP_DIR
+#ifeq ($(firstword $(filter zip,$(MAKECMDGOALS))),zip)
+#quinn_leader_parser.zip: TMP_DIR := \
+#			 $(shell mktemp -d tmp_parser.XXXXXXXXXX)
+#endif
+#endif
 
 quinn_leader_parser.zip: src/mini_l.lex src/mini_l.y mini_l_grammar.pdf \
 			 release/template_makefile
-	@echo "mktemp -d tmp_parser.XXXXXXXXXX"
+	@echo "mktemp -d tmp_zip.XXXXXXXXXX"
 	@echo "$(TMP_DIR)"
-	cp -t '$(TMP_DIR)' $(wordlist 1, 3, $?)
+	cp -t '$(TMP_DIR)' $(wordlist 2, $(words $?), foo $?)
 	printf '# Generated at %s\n\n%s\n' "$$(date)" \
-		"$$(cat $(word 4, $?))" > '$(TMP_DIR)/Makefile'
-	zip -j $@ $(addprefix $(TMP_DIR)/, $(notdir $(wordlist 1, 3, $?)) \
-		Makefile)
-	rm -rf '$(TMP_DIR)'
+		"$$(cat $(lastword $?))" > '$(TMP_DIR)/Makefile'
+	zip -j $@ $(addprefix $(TMP_DIR)/, $(notdir $(wordlist 2, \
+		$(words $?), foo $?)) Makefile)
 
 clean:
 	rm -rf lexer lex.yy.c parser y.tab.c y.tab.h y.output compiler \
-	mini_l_grammar.pdf $(TEX_DIR) quinn_leader_parser.zip $(if \
-	$(value TMP_DIR),$(TMP_DIR),tmp_parser.*) \
+	mini_l_grammar.pdf $(TEX_DIR) quinn_leader_*.zip $(if \
+	$(value TMP_DIR),$(TMP_DIR),tmp_zip.*) \
 	milRun.stat *.mil

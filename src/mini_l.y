@@ -13,6 +13,7 @@ FILE * yyin;
 int ERROR = 0;
 int numErr = 0;
 #define	free(a) 
+#define	freeStrArr(a) 
 #ifdef	PARSER
 	#include "parser_str.h"
 	#define	PROD_RULE(rule)		(printf((rule)))
@@ -20,12 +21,8 @@ int numErr = 0;
 #else
 	#include "str.h"
 	#include "code_gen.h"
-/*
 	#define	PROD_RULE(rule)
 	#define	PROD_RULE1(rule, arg)
-*/
-	#define	PROD_RULE(rule)		(printf((rule)))
-	#define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
 	#define	semErr(msg)	(err((msg)))
 #endif
 
@@ -93,6 +90,7 @@ prog_start:
 		PROD_RULE("prog_start -> functions\n");
 
 		if (numErr == 0) {
+			STRSTR($1)[STRLEN($1)-10] = '\0';
 			puts(STRSTR($1));
 			puts("\n");
 		}
@@ -133,7 +131,6 @@ function:
 	} BEGIN_PARAMS declarations END_PARAMS
 	  BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY {
 		PROD_RULE("function -> FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n");
-
 		stmt params = gen_params($6);
 		stmt locals = gen_decls($9);
 		$$ = gen_func($2, params, locals, $12);
@@ -172,8 +169,9 @@ declarations:
 		PROD_RULE("declarations -> declaration SEMICOLON declarations\n");
 		
 		int i;
-		for (i = 0; i < ARRLEN($3); i++)
+		for (i = 0; i < ARRLEN($3); i++) {
 			push(&$1, &(ARR($3)[i]));
+		}
 		free(ARR($3));
 		$$ = $1;
 		}
@@ -185,9 +183,7 @@ declaration:
 
 		int i;
 		for (i = 0; i < ARRLEN($1); i++) {
-			printf("loop %d, str = %s\n", i, STRSTR(ARR($1)[i]));
 			str ident = GETSTR($1, i);
-			printf("str = %s\n", STRSTR(ident));
 			if (IS_INT(ident) || IS_ARR(ident) || IS_ENUM(ident)) {
 				str msg = strFrom(STRSTR(ident));
 				appendStr(&msg, " is defined multiple times.");
@@ -196,7 +192,6 @@ declaration:
 				freeStr(&ident);
 			} else
 				push(&intTable, &ident);
-			printf("intTable = %s\n", STRSTR(peek(intTable)));
 		}
 		$$ = $1;
 		}
@@ -216,7 +211,6 @@ declaration:
 			} else {
 				arrSizeTable[ARRLEN(arrTable)] = $5;
 				push(&arrTable, &ident);
-			printf("arrTable = %s\n", STRSTR(peek(arrTable)));
 			}
 		}
 		if ($5 <= 0)
@@ -666,7 +660,6 @@ var:
 	  ident {
 		PROD_RULE("var -> ident\n");
 
-printf("ident = '%s', table = '%s'\n", STRSTR($1), STRSTR(GETSTR(intTable, 0)));
 		if (IS_ARR($1))
 			semErr("Cannot access array as a scalar.");
 		else if (!IS_INT($1) && !IS_ENUM($1))
@@ -678,7 +671,6 @@ printf("ident = '%s', table = '%s'\n", STRSTR($1), STRSTR(GETSTR(intTable, 0)));
 	| ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET {
 		PROD_RULE("var -> ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");
 
-printf("ident = '%s', table = '%s'\n", STRSTR($1), STRSTR(GETSTR(arrTable, 0)));
 		if (IS_INT($1) || IS_ENUM($1))
 			semErr("Cannot access scalar as an array.");
 		else if (!IS_ARR($1))
