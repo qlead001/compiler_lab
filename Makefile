@@ -38,6 +38,9 @@ debug: all
 compiler: y.tab.c lex.yy.c cstring/str.c src/code_gen.c
 	$(CC) $(CC_FLAGS) -o $@ $^ $(LIB)
 
+compiler-debug: y.tab.c lex.yy.c cstring/str.c src/code_gen.c
+	$(CC) $(CC_FLAGS) -D DEBUG -D DEBUG_PROD_RULES -g -o compiler $^ $(LIB)
+
 parser: y.tab.c lex.yy.c
 	$(CC) $(CC_FLAGS) -Wno-unused-parameter -o $@ $^ -D PARSER $(LIB)
 
