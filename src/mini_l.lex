@@ -160,6 +160,12 @@ int main(int argc, char ** argv) {
 		else printf("\n");
 	}
 
+	if (yyin != stdin) {
+		fclose(yyin);
+	}
+
+	yylex_destroy();
+
 	return 0;
 }
 #endif

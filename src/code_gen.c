@@ -6,8 +6,6 @@
 #include "code_gen.h"
 #include "str.h"
 
-#define free(a)
-
 extern void err(const char *msg);
 
 /* Allocate new strArr's for globals */
@@ -94,7 +92,7 @@ stmt gen_params(strArr idents) {
 	str ident, argStr, line;
 	stmt param;
 	
-	for (i = 0; i < ARRLEN(idents)-1; i++) {
+	for (i = 0; i < ARRLEN(idents); i++) {
 		sprintf(arg+1, "%d", i);
 		argStr = strFrom(arg);
 		ident = GETSTR(idents, i);
@@ -122,7 +120,7 @@ stmt gen_decls(strArr idents) {
 	str ident;
 	stmt decls, line;
 
-	for (i = 0; i < ARRLEN(idents)-1; i++) {
+	for (i = 0; i < ARRLEN(idents); i++) {
 		ident = GETSTR(idents, i);
 
 		if (IS_INT(ident) || IS_ENUM(ident))
@@ -188,11 +186,12 @@ stmt gen_if(expr boolexp, stmt code) {
 
 	stmt if_st = newStr();
 	append(&if_st, boolexp.code);
-	str line1 = instruction(":?", &mid, &(boolexp.place), NULL);
+	str line1 = instruction("?:=", &mid, &(boolexp.place), NULL);
 	str line2 = instruction(":=", &end, NULL);
 	str line3 = instruction(":", &mid, NULL);
 	str line4 = instruction(":", &end, NULL);
 	concatln(&if_st, &line1, &line2, &line3, &code, &line4, NULL);
+	freeStr(&line1); freeStr(&line2); freeStr(&line3); freeStr(&line4);
 	freeStr(&mid); freeStr(&end);
 	return if_st;
 }
@@ -203,7 +202,7 @@ stmt gen_if_else(expr boolexp, stmt trueCode, stmt falseCode) {
 
 	stmt if_st = newStr();
 	append(&if_st, boolexp.code);
-	str line1 = instruction(":?", &mid, &(boolexp.place), NULL);
+	str line1 = instruction("?:=", &mid, &(boolexp.place), NULL);
 	str line2 = instruction(":=", &end, NULL);
 	str line3 = instruction(":", &mid, NULL);
 	str line4 = instruction(":", &end, NULL);
@@ -222,7 +221,7 @@ stmt gen_while(expr boolexp, stmt code) {
 	stmt wh_st = newStr();
 	append(&wh_st, boolexp.code);
 	str line0 = instruction(":", &begin, NULL);
-	str line1 = instruction(":?", &mid, &(boolexp.place), NULL);
+	str line1 = instruction("?:=", &mid, &(boolexp.place), NULL);
 	str line2 = instruction(":=", &end, NULL);
 	str line3 = instruction(":", &mid, NULL);
 	str line4 = instruction(":=", &begin, NULL);
@@ -245,7 +244,7 @@ stmt gen_do_while(expr boolexp, stmt code) {
 	str line0 = instruction(":", &begin, NULL);
 	append(&wh_st, line0);
 	str line1 = instruction(":", &mid, NULL);
-	str line2 = instruction(":?", &begin, &(boolexp.place), NULL);
+	str line2 = instruction("?:=", &begin, &(boolexp.place), NULL);
 	concatln(&wh_st, &code, &(boolexp.code), &line1, &line2, NULL);
 
 	freeStr(&line0); freeStr(&line1); freeStr(&line2);
@@ -319,10 +318,12 @@ stmt gen_return(expr exp) {
 expr gen_op(const char* op, expr e1, expr e2) {
 	expr e;
 	e.place = newTemp();
-	e.code = instruction(".", &(e.place), NULL);
-	str line = instruction(op, &(e.place), &(e1.place), &(e2.place), NULL);
-	concatln(&(e.code), &(e1.code), &(e2.code), &line, NULL);
-	freeStr(&line);
+	e.code = newStr();
+	append(&(e.code), e1.code);
+	str line1 = instruction(".", &(e.place), NULL);
+	str line2 = instruction(op, &(e.place), &(e1.place), &(e2.place), NULL);
+	concatln(&(e.code), &(e2.code), &line1, &line2, NULL);
+	freeStr(&line1); freeStr(&line2);
 	return e;
 }
 
@@ -357,8 +358,8 @@ expr gen_func_call(str func, exprs paramExp) {
 	int i;
 	expr e;
 	e.place = newTemp();
-	e.code = instruction(".", &(e.place), NULL);
-	concatln(&(e.code), &(paramExp.code), NULL);
+	e.code = newStr();
+	append(&(e.code), paramExp.code);
 	str line, line2;
 	str ident;
 	strArr params = paramExp.places;

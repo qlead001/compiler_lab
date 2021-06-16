@@ -12,8 +12,7 @@ extern int currPos;
 FILE * yyin;
 int ERROR = 0;
 int numErr = 0;
-#define	free(a) 
-#define	freeStrArr(a) 
+
 #ifdef	PARSER
 	#include "parser_str.h"
 	#define	PROD_RULE(rule)		(printf((rule)))
@@ -21,8 +20,13 @@ int numErr = 0;
 #else
 	#include "str.h"
 	#include "code_gen.h"
-	#define	PROD_RULE(rule)
-	#define	PROD_RULE1(rule, arg)
+	#ifdef	DEBUG_PROD_RULES
+		#define	PROD_RULE(rule)		(printf((rule)))
+		#define	PROD_RULE1(rule, arg)	(printf((rule), (arg)))
+	#else
+		#define	PROD_RULE(rule)
+		#define	PROD_RULE1(rule, arg)
+	#endif
 	#define	semErr(msg)	(err((msg)))
 #endif
 
@@ -90,10 +94,15 @@ prog_start:
 		PROD_RULE("prog_start -> functions\n");
 
 		if (numErr == 0) {
-			STRSTR($1)[STRLEN($1)-10] = '\0';
-			puts(STRSTR($1));
-			puts("\n");
+			fputs(STRSTR($1), stdout);
 		}
+
+		freeStr(&$1);
+		freeStrArr(&loopStack);
+		freeStrArr(&arrTable);
+		freeStrArr(&intTable);
+		freeStrArr(&enumTable);
+		freeStrArr(&funcTable);
 		}
 	;
 
@@ -106,6 +115,7 @@ functions:
 			semErr("missing main function.");
 		}
 		freeStr(&s);
+		$$ = newStr();
 		}
 	| function functions {
 		PROD_RULE("functions -> function functions\n");
@@ -134,11 +144,11 @@ function:
 		stmt params = gen_params($6);
 		stmt locals = gen_decls($9);
 		$$ = gen_func($2, params, locals, $12);
-		freeStrArr(&$6); freeStrArr(&$9); freeStr(&$12);
+		free(ARR($6)); free(ARR($9)); freeStr(&$12);
 		freeStr(&params); freeStr(&locals);
 		dumpVars();
 		}
-/*
+/* TODO: Firgure out whether these rules break things
 	| FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS
 	  BEGIN_LOCALS declarations END_LOCALS error FUNCTION {
 		printErr("invalid function, missing body");
@@ -164,16 +174,23 @@ function:
 declarations:
 	  /* epsilon */ {
 		PROD_RULE("declarations -> epsilon\n");
+		$$ = newStrArr();
 		}
 	| declaration SEMICOLON declarations {
 		PROD_RULE("declarations -> declaration SEMICOLON declarations\n");
+
+		if ($1.len == 0) {
+			$$ = $3;
+			freeStrArr(&$1);
+		} else {
 		
-		int i;
-		for (i = 0; i < ARRLEN($3); i++) {
-			push(&$1, &(ARR($3)[i]));
+			int i;
+			for (i = 0; i < ARRLEN($3); i++) {
+				push(&$1, &(ARR($3)[i]));
+			}
+			free(ARR($3));
+			$$ = $1;
 		}
-		free(ARR($3));
-		$$ = $1;
 		}
 	;
 
@@ -467,6 +484,8 @@ comp:
 expressions:
 	  /* epsilon */ {
 		PROD_RULE("expressions -> epsilon\n");
+		$$.places = newStrArr();
+		$$.code = newStr();
 		}
 	| expression {
 		PROD_RULE("expressions -> expression\n");
@@ -561,6 +580,8 @@ term:
 			line2 = instruction("=", &(e.place), &($2.name), NULL);
 			concatln(&(e.code), &line2, NULL);
 		}
+		freeStr(&($2.name)); freeStr(&($2.arrIndex.place));
+		freeStr(&($2.arrIndex.code));
 		freeStr(&line2);
 
 		$$ = gen_uminus(e);
@@ -574,8 +595,11 @@ term:
 		char buf[11];
 		sprintf(buf, "%d", $2);
 		str strNum = strFrom(buf);
-		e.code = instruction("=", &(e.place), &strNum, NULL);
+		e.code = instruction(".", &(e.place), NULL);
+		str line1 = instruction("=", &(e.place), &strNum, NULL);
+		concatln(&(e.code), &line1, NULL);
 		freeStr(&strNum);
+		freeStr(&line1);
 
 		$$ = gen_uminus(e);
 		freeStr(&(e.code)); freeStr(&(e.place));
@@ -600,7 +624,9 @@ term:
 			$$.code = line1;
 			line2 = instruction("=", &($$.place), &($1.name), NULL);
 			concatln(&($$.code), &line2, NULL);
+			freeStr(&($1.arrIndex.code));
 		}
+		freeStr(&($1.name)); freeStr(&($1.arrIndex.place));
 		freeStr(&line2);
 		}
 	| NUMBER {
@@ -610,8 +636,11 @@ term:
 		char buf[11];
 		sprintf(buf, "%d", $1);
 		str strNum = strFrom(buf);
-		$$.code = instruction("=", &($$.place), &strNum, NULL);
+		$$.code = instruction(".", &($$.place), NULL);
+		str line1 = instruction("=", &($$.place), &strNum, NULL);
+		concatln(&($$.code), &line1, NULL);
 		freeStr(&strNum);
+		freeStr(&line1);
 		}
 	| L_PAREN expression R_PAREN {
 		PROD_RULE("term -> L_PAREN expression R_PAREN\n");
@@ -696,7 +725,15 @@ int main(int argc, char ** argv) {
 
 	initArr();
 
-	return yyparse();
+	int parseOut = yyparse();
+
+	if (yyin != stdin) {
+		fclose(yyin);
+	}
+
+	yylex_destroy();
+
+	return parseOut;
 }
 
 void yyerror(const char *msg) {
